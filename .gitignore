@@ -1,0 +1,32 @@
+/node_modules
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+/.idea
+/.vscode
+/auth.json
+/public/build
+/storage/pail
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+
+# Flutter
+Apk/build/
+Apk/.dart_tool/
+Apk/.flutter-plugins
+Apk/.flutter-plugins-dependencies
+Apk/.pub-cache/
+Apk/.packages
+Apk/android/local.properties
+
+# Junk
+.gradle_cache/
+flutter_portable/
+*.log
+.DS_Store
+Thumbs.db

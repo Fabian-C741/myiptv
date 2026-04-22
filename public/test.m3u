@@ -1,0 +1,9 @@
+#EXTM3U
+#EXTINF:-1 tvg-logo="https://peach.blender.org/wp-content/uploads/bbb-lesser.png" group-title="Películas (Test)",Big Buck Bunny
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-logo="https://mango.blender.org/wp-content/uploads/2013/05/poster_tos_low-600x337.jpg" group-title="Películas (Test)",Tears of Steel
+http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8
+#EXTINF:-1 tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Sintel_poster.jpg/800px-Sintel_poster.jpg" group-title="Series (Test)",Sintel (Episodio 1)
+https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8
+#EXTINF:-1 tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Elephants_Dream_poster.jpg/800px-Elephants_Dream_poster.jpg" group-title="Películas (Test)",Elephants Dream
+https://bitdash-a.akamaihd.net/content/MI201109210084_1/m3u8s/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8
