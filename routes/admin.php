@@ -38,4 +38,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/stremio', [\App\Http\Controllers\Admin\StremioAddonController::class, 'index'])->name('admin.stremio.index');
     Route::post('/stremio', [\App\Http\Controllers\Admin\StremioAddonController::class, 'store'])->name('admin.stremio.store');
     Route::delete('/stremio/{stremioAddon}', [\App\Http\Controllers\Admin\StremioAddonController::class, 'destroy'])->name('admin.stremio.destroy');
+
+    // Sincronización Legal
+    Route::post('/legal-channels/sync', [\App\Http\Controllers\Admin\LegalChannelController::class, 'sync'])->name('admin.legal.sync');
 });
