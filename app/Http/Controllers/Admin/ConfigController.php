@@ -63,6 +63,26 @@ class ConfigController extends Controller
             Setting::set('app_logo', $path);
         }
 
+        // Lógica Automática para el APK
+        if ($request->hasFile('apk_file')) {
+            // 1. Guardar el archivo APK
+            $apkName = 'Electrofabiptv.apk';
+            $request->file('apk_file')->storeAs('public/updates', $apkName);
+            
+            // 2. Generar la URL automática
+            $apkUrl = url(Storage::url('updates/' . $apkName));
+            Setting::set('app_apk_url', $apkUrl);
+
+            // 3. Auto-incrementar la versión
+            $currentVersion = Setting::get('app_version', '1.0.0');
+            $parts = explode('.', $currentVersion);
+            if (count($parts) == 3) {
+                $parts[2] = (int)$parts[2] + 1; // Incrementamos el último número
+                $newVersion = implode('.', $parts);
+                Setting::set('app_version', $newVersion);
+            }
+        }
+
         if ($request->expectsJson()) {
             return response()->json(['message' => 'Configuración actualizada']);
         }

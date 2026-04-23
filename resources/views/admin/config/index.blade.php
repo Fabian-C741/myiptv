@@ -36,7 +36,12 @@
                     <div class="form-group">
                         <label class="form-label">URL de descarga del APK</label>
                         <input type="url" name="app_apk_url" class="form-input" value="{{ $settings['app_apk_url'] }}" placeholder="https://tu-dominio.com/electrofab.apk">
-                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">Los clientes descargarán la actualización desde aquí.</p>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px dashed var(--border);">
+                        <label class="form-label" style="color: #00aaff;">🚀 Subir Nuevo APK (Automático)</label>
+                        <input type="file" name="apk_file" class="form-input" accept=".apk">
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">Si subes un archivo aquí, el sistema actualizará la URL y subirá la versión automáticamente.</p>
                     </div>
                 </div>
 
