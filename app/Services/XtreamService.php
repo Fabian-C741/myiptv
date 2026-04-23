@@ -44,7 +44,7 @@ class XtreamService
                         ['stream_id' => $chan['stream_id'], 'playlist_id' => $source->id],
                         [
                             'name' => $chan['name'],
-                            'stream_url' => "{$baseUrl}/live/{$source->username}/{$source->password}/{$chan['stream_id']}.ts", 
+                            'stream_url' => "{$baseUrl}/{$source->username}/{$source->password}/{$chan['stream_id']}", 
                             'logo' => $chan['stream_icon'],
                             'channel_group_id' => $group?->id,
                             'type' => 'live',

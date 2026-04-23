@@ -181,6 +181,26 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
             if (playerState.isBuffering)
                 const Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
 
+            // Error Overlay
+            if (playerState.error != null)
+                Center(
+                    child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                            const Icon(Icons.error_outline, color: Colors.red, size: 60),
+                            const SizedBox(height: 16),
+                            const Text('Error de Sintonización', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            Text(playerState.error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                                onPressed: () => ref.read(playerProvider('global').notifier).playChannel(widget.channel),
+                                child: const Text('Reintentar'),
+                            )
+                        ],
+                    ),
+                ),
+
             // Controles Netflix Style
             if (_showControls) ...[
                 // Top Bar

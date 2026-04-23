@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -35,6 +37,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     await ref.read(authProvider.notifier).login(email, password);
+  }
+
+  void _contactSupport() async {
+    // Aquí pondremos tu número de WhatsApp. 
+    // Puedes cambiarlo luego desde el backend
+    final whatsappUrl = Uri.parse("https://wa.me/5491100000000?text=Hola,%20necesito%20ayuda%20con%20ElectroFabi%20IPTV");
+    if (await canLaunchUrl(whatsappUrl)) {
+      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -71,12 +82,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Image.asset('assets/icons/logo.png', height: 100),
+                  const SizedBox(height: 24),
                   const Text(
-                    'Iniciar sesión',
+                    'ELECTROFABI IPTV',
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryRed,
+                      letterSpacing: 1.5,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -86,11 +100,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: 'Usuario / Email',
+                      labelStyle: const TextStyle(color: Colors.white70),
                       filled: true,
-                      fillColor: Colors.grey[900],
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      fillColor: Colors.white12,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -99,13 +115,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Contraseña',
+                      labelStyle: const TextStyle(color: Colors.white70),
                       filled: true,
-                      fillColor: Colors.grey[900],
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      fillColor: Colors.white12,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                        icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off, color: Colors.white54),
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
@@ -118,6 +136,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: AppTheme.primaryRed,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: authState.isLoading
                         ? const SizedBox(
@@ -125,13 +144,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
-                        : const Text('Entrar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        : const Text('ENTRAR', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('¿Necesitas ayuda?', style: TextStyle(color: Colors.grey)),
+                  const Text(
+                    '¿No tienes cuenta?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                  
+                  TextButton.icon(
+                    onPressed: _contactSupport,
+                    icon: const Icon(Icons.whatsapp, color: Colors.green),
+                    label: const Text('Contactar Soporte (WhatsApp)', style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
