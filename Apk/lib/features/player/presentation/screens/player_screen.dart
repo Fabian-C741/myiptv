@@ -43,7 +43,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   void dispose() {
-    ref.read(playerProvider('global').notifier).stop();
+    // No detenemos el player inmediatamente para permitir transiciones suaves
+    // ref.read(playerProvider('global').notifier).stop();
     super.dispose();
   }
 
@@ -211,13 +212,28 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               _Controls(
                 channel: widget.channel,
                 isPlaying: playerState.isPlaying,
+                isMuted: playerState.player.state.volume == 0,
+                position: playerState.player.state.position,
+                duration: playerState.player.state.duration,
                 activeTrack: playerState.activeAudioTrack,
                 hasAudioTracks: playerState.tracks.audio.length > 1,
                 onTogglePlay: () =>
                     ref.read(playerProvider('global').notifier).togglePlay(),
+                onMute: () {
+                    final currentVol = playerState.player.state.volume;
+                    playerState.player.setVolume(currentVol > 0 ? 0 : 100);
+                    setState(() {});
+                },
+                onSeek: (position) => playerState.player.seek(position),
                 onAudio: () =>
                     _showAudioPicker(context, playerState),
-                onBack: () => Navigator.pop(context),
+                onBack: () {
+                  // Si es VOD, pausamos al salir, si es TV podemos dejarlo
+                  if (widget.channel.type != 'live') {
+                      ref.read(playerProvider('global').notifier).stop();
+                  }
+                  Navigator.pop(context);
+                },
               ),
           ],
         ),
@@ -229,21 +245,38 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 class _Controls extends StatelessWidget {
   final ChannelModel channel;
   final bool isPlaying;
+  final bool isMuted;
+  final Duration position;
+  final Duration duration;
   final AudioTrack? activeTrack;
   final bool hasAudioTracks;
   final VoidCallback onTogglePlay;
+  final VoidCallback onMute;
+  final Function(Duration) onSeek;
   final VoidCallback onAudio;
   final VoidCallback onBack;
 
   const _Controls({
     required this.channel,
     required this.isPlaying,
+    required this.isMuted,
+    required this.position,
+    required this.duration,
     required this.activeTrack,
     required this.hasAudioTracks,
     required this.onTogglePlay,
+    required this.onMute,
+    required this.onSeek,
     required this.onAudio,
     required this.onBack,
   });
+
+  String _formatDuration(Duration d) {
+    final hh = d.inHours.toString().padLeft(2, '0');
+    final mm = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final ss = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return d.inHours > 0 ? "$hh:$mm:$ss" : "$mm:$ss";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -320,22 +353,86 @@ class _Controls extends StatelessWidget {
             ),
           ),
 
-          // Play/Pause central
-          Padding(
-            padding: const EdgeInsets.only(bottom: 48),
+          // Play/Pause central con botón Mute
+          Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
+                  icon: Icon(isMuted ? Icons.volume_off : Icons.volume_up, color: Colors.white70, size: 32),
+                  onPressed: onMute,
+                ),
+                const SizedBox(width: 30),
+                IconButton(
                   icon: Icon(
-                    isPlaying
-                        ? Icons.pause_circle_filled
-                        : Icons.play_circle_filled,
+                    isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
                     color: Colors.white,
-                    size: 72,
+                    size: 84,
                   ),
                   onPressed: onTogglePlay,
                 ),
+                const SizedBox(width: 30),
+                IconButton(
+                  icon: const Icon(Icons.settings, color: Colors.white70, size: 32),
+                  onPressed: onAudio,
+                ),
+              ],
+            ),
+          ),
+
+          // Barra de progreso y tiempo
+          Padding(
+            padding: const EdgeInsets.only(bottom: 30, left: 24, right: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (channel.type != 'live' && duration.inSeconds > 0) ...[
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 4,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                      activeTrackColor: AppTheme.primaryRed,
+                      inactiveTrackColor: Colors.white24,
+                      thumbColor: AppTheme.primaryRed,
+                    ),
+                    child: Slider(
+                      value: position.inSeconds.toDouble().clamp(0.0, duration.inSeconds.toDouble()),
+                      max: duration.inSeconds.toDouble(),
+                      onChanged: (v) => onSeek(Duration(seconds: v.toInt())),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_formatDuration(position), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                        Text(_formatDuration(duration), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryRed,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Row(
+                          children: [
+                            CircleAvatar(radius: 3, backgroundColor: Colors.white),
+                            SizedBox(width: 8),
+                            Text('EN VIVO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

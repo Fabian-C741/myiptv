@@ -68,15 +68,16 @@ class AppUpdateService {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Más tarde', style: TextStyle(color: Colors.grey)),
+            child: const Text('IGNORAR', style: TextStyle(color: Colors.white24, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueAccent,
+              backgroundColor: AppTheme.primaryRed,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () => _launchURL(url),
-            child: const Text('Actualizar Ahora'),
+            child: const Text('ACTUALIZAR AHORA', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

@@ -28,7 +28,7 @@ class _OttAppState extends ConsumerState<OttApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Electrofabiptv',
+      title: 'ELECTROFABI IPTV',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: AppRouter.router,

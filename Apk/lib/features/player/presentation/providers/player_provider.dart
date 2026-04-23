@@ -49,7 +49,8 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   static const int _maxRetries = 3;
 
   PlayerNotifier() : super(PlayerState(player: Player(configuration: const PlayerConfiguration(
-    bufferSize: 32 * 1024 * 1024, // 32 MB buffer para carga rápida
+    bufferSize: 64 * 1024 * 1024, // Aumentado a 64 MB para mayor estabilidad
+    protocolWhitelist: ['http', 'https', 'tcp', 'tls', 'crypto', 'data', 'file', 'rtp', 'udp'],
   )))) {
     _initListeners();
   }
@@ -75,7 +76,21 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       }
     });
     state.player.stream.tracks.listen((tracks) {
-      if (mounted) state = state.copyWith(tracks: tracks);
+      if (!mounted) return;
+      state = state.copyWith(tracks: tracks);
+      
+      // Intento de auto-selección de audio en Español (es, spa, Spanish)
+      final active = state.activeAudioTrack;
+      if (active == null || active.id == 'auto') {
+        for (var track in tracks.audio) {
+          final lang = track.language?.toLowerCase() ?? '';
+          final title = track.title?.toLowerCase() ?? '';
+          if (lang.contains('es') || lang.contains('spa') || title.contains('esp')) {
+            setAudioTrack(track);
+            break;
+          }
+        }
+      }
     });
     state.player.stream.track.listen((track) {
       if (mounted) state = state.copyWith(activeAudioTrack: track.audio);
