@@ -26,12 +26,16 @@ Route::middleware('auth:admin')->group(function () {
     /*
     | Estas rutas usan redirecciones en lugar de JSON
     */
+    // Gestión de Usuarios
     Route::get('/users', [UserAdminController::class, 'indexWeb'])->name('admin.users');
     Route::get('/users/create', [UserAdminController::class, 'create'])->name('admin.users.create');
     Route::post('/users', [UserAdminController::class, 'storeWeb'])->name('admin.users.store');
     Route::get('/users/{id}/edit', [UserAdminController::class, 'edit'])->name('admin.users.edit');
     Route::patch('/users/{id}', [UserAdminController::class, 'updateWeb'])->name('admin.users.update');
     Route::patch('/users/{id}/status', [UserAdminController::class, 'updateStatusWeb'])->name('admin.users.status');
-    
-    // Próximamente: Gestión de Contenido M3U, Canales, etc.
+
+    // Gestión de Stremio Addons
+    Route::get('/stremio', [\App\Http\Controllers\Admin\StremioAddonController::class, 'index'])->name('admin.stremio.index');
+    Route::post('/stremio', [\App\Http\Controllers\Admin\StremioAddonController::class, 'store'])->name('admin.stremio.store');
+    Route::delete('/stremio/{stremioAddon}', [\App\Http\Controllers\Admin\StremioAddonController::class, 'destroy'])->name('admin.stremio.destroy');
 });
