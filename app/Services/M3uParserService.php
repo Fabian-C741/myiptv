@@ -30,6 +30,7 @@ class M3uParserService
                 preg_match('/tvg-logo="([^"]+)"/i', $line, $logoMatch);
                 
                 // Get Name
+                $parts = explode(',', $line);
                 $name = trim(end($parts));
                 
                 // Filtro Anti-Basura: Si el nombre tiene muchos puntos y coma o es un separador
