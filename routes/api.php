@@ -51,7 +51,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/avatar',       [ProfileController::class, 'uploadAvatar']); // Foto desde galería
     });
 
-    // Fuentes Externas (Stremio / MXL / M3U / URL directa)
+    // Fuentes Externas y VOD (Stremio / MXL / M3U / URL directa)
+    Route::prefix('vod')->group(function () {
+        Route::get('/stremio/catalogs', [\App\Http\Controllers\Api\AppVODController::class, 'getCatalogs']);
+        Route::get('/stremio/items',    [\App\Http\Controllers\Api\AppVODController::class, 'getCatalogItems']);
+    });
+
     Route::prefix('external-sources')->group(function () {
         Route::get('/',              [ExternalSourceController::class, 'index']);
         Route::post('/',             [ExternalSourceController::class, 'store']);

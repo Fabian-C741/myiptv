@@ -273,6 +273,21 @@
                     <i data-lucide="user"></i>
                     <span>Mi Perfil</span>
                 </a>
+
+                <hr style="border-color: var(--border); margin: 10px 0; opacity: 0.5;">
+                
+                <a href="{{ route('admin.stremio.index') }}" class="nav-item {{ request()->routeIs('admin.stremio*') ? 'active' : '' }}">
+                    <i data-lucide="puzzle"></i>
+                    <span>Stremio Addons</span>
+                </a>
+                
+                <form action="{{ route('admin.legal.sync') }}" method="POST" id="sync-form">
+                    @csrf
+                    <button type="submit" class="nav-item" style="background: none; border: none; width: 100%; cursor: pointer;" onclick="return confirm('¿Sincronizar canales legales ahora?')">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>Sincronización Legal</span>
+                    </button>
+                </form>
             </nav>
 
             <form action="{{ route('admin.logout') }}" method="POST" id="logout-form">
