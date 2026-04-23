@@ -29,8 +29,8 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.apk"
-    compileSdk = 36
+    namespace = "com.electrofabiptv.app"
+    compileSdk = 34
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -49,7 +49,7 @@ android {
     defaultConfig {
         applicationId "com.electrofabiptv.app"
         minSdkVersion 21
-        targetSdkVersion 36
+        targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
