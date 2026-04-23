@@ -89,7 +89,7 @@ class M3uParserService
                     'type' => 'live',
                     'name' => $safeName,
                     'logo' => $safeLogo,
-                    'is_active' => true
+                    'is_adult' => false
                 ]
             );
         } catch (\Exception $e) {
