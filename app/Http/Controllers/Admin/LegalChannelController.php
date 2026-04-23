@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Channel;
-use App\Models\Category;
+use App\Models\ChannelGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -21,8 +21,11 @@ class LegalChannelController extends Controller
                 $lines = explode("\n", $response->body());
                 $count = 0;
                 
-                // Aseguramos que exista una categoría para canales legales
-                $category = Category::firstOrCreate(['name' => 'Canales Legales (IPTV-org)']);
+                // Aseguramos que exista un grupo para canales legales
+                $group = ChannelGroup::firstOrCreate([
+                    'name' => 'Canales Legales (IPTV-org)',
+                    'slug' => 'canales-legales'
+                ]);
 
                 for ($i = 0; $i < count($lines); $i++) {
                     if (str_starts_with($lines[$i], '#EXTINF')) {
@@ -38,7 +41,7 @@ class LegalChannelController extends Controller
                                 'name' => $channelName,
                                 'stream_url' => $streamUrl,
                                 'logo' => $logo[1] ?? null,
-                                'category_id' => $category->id,
+                                'channel_group_id' => $group->id,
                                 'is_active' => true
                             ]);
                             $count++;
