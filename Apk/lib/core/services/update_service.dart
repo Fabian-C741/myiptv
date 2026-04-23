@@ -17,9 +17,13 @@ class AppUpdateService {
    */
   Future<void> checkForUpdates(BuildContext context) async {
     try {
-      // Usamos /app/config que ahora es pública
-      final response = await _dio.instance.get('/app/config');
-      if (response.statusCode == 200) {
+      // Timeout de 3 segundos para no bloquear el inicio
+      final response = await _dio.instance.get('/app/config').timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => throw Exception('Timeout'),
+      );
+      
+      if (response.statusCode == 200 && context.mounted) {
         final serverVersion = response.data['current_version'];
         final apkUrl = response.data['apk_url'];
 
@@ -33,7 +37,7 @@ class AppUpdateService {
         }
       }
     } catch (e) {
-      // Silencioso en caso de error de red durante el check inicial
+      debugPrint('Error en update check: $e');
     }
   }
 

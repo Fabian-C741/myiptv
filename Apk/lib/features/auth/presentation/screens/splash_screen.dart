@@ -24,15 +24,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initApp() async {
-    // 1. Verificar Actualizaciones primero
-    final dio = DioClient(SecureStorageService());
-    await AppUpdateService(dio).checkForUpdates(context);
+    try {
+        // 1. Verificar Actualizaciones (Con tiempo límite)
+        final dio = DioClient(SecureStorageService());
+        await AppUpdateService(dio).checkForUpdates(context);
+    } catch (e) {
+        debugPrint('Error en el inicio: $e');
+    }
+
+    if (!mounted) return;
 
     // 2. Esperar un poco para la animación
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
     
-    // 3. Verificar Auth
-    await ref.read(authProvider.notifier).checkAuthStatus();
+    try {
+        // 3. Verificar Auth
+        await ref.read(authProvider.notifier).checkAuthStatus();
+    } catch (e) {
+        debugPrint('Error en auth check: $e');
+    }
     
     if (mounted) {
       final authState = ref.read(authProvider);
