@@ -21,7 +21,7 @@
 
             <div class="form-group">
                 <label class="form-label">Tipo de Conexión</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                     <label style="border: 1px solid var(--border); padding: 1rem; border-radius: 15px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
                         <input type="radio" name="type" value="xtream" checked onclick="toggleFields('xtream')" style="accent-color: var(--primary);">
                         <div>
@@ -34,6 +34,27 @@
                         <div>
                             <span style="display: block; font-weight: 600;">Lista M3U</span>
                             <span style="font-size: 0.75rem; color: var(--text-dim);">Enlace .m3u8</span>
+                        </div>
+                    </label>
+                    <label style="border: 1px solid var(--border); padding: 1rem; border-radius: 15px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                        <input type="radio" name="type" value="stremio" onclick="toggleFields('stremio')" style="accent-color: var(--primary);">
+                        <div>
+                            <span style="display: block; font-weight: 600;">Stremio</span>
+                            <span style="font-size: 0.75rem; color: var(--text-dim);">Addon URL</span>
+                        </div>
+                    </label>
+                    <label style="border: 1px solid var(--border); padding: 1rem; border-radius: 15px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                        <input type="radio" name="type" value="mxl" onclick="toggleFields('mxl')" style="accent-color: var(--primary);">
+                        <div>
+                            <span style="display: block; font-weight: 600;">MXL / Otros</span>
+                            <span style="font-size: 0.75rem; color: var(--text-dim);">Enlace Externo</span>
+                        </div>
+                    </label>
+                    <label style="border: 1px solid var(--border); padding: 1rem; border-radius: 15px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                        <input type="radio" name="type" value="direct" onclick="toggleFields('direct')" style="accent-color: var(--primary);">
+                        <div>
+                            <span style="display: block; font-weight: 600;">Enlace Directo</span>
+                            <span style="font-size: 0.75rem; color: var(--text-dim);">MP4 / MKV / HLS</span>
                         </div>
                     </label>
                 </div>

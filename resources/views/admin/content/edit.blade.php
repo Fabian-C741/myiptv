@@ -23,7 +23,7 @@
 
             <div class="form-group">
                 <label class="form-label">Tipo de Conexión</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <label class="connection-type {{ $playlist->type == 'xtream' ? 'active' : '' }}" id="label-xtream">
                         <input type="radio" name="type" value="xtream" style="display: none;" {{ $playlist->type == 'xtream' ? 'checked' : '' }}>
                         <div style="display: flex; align-items: center; gap: 1rem;">
@@ -41,6 +41,36 @@
                             <div>
                                 <div style="font-weight: 600;">Lista M3U</div>
                                 <div style="font-size: 0.75rem; color: var(--text-dim);">Enlace .m3u8</div>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="connection-type {{ $playlist->type == 'stremio' ? 'active' : '' }}" id="label-stremio">
+                        <input type="radio" name="type" value="stremio" style="display: none;" {{ $playlist->type == 'stremio' ? 'checked' : '' }}>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div class="radio-circle"></div>
+                            <div>
+                                <div style="font-weight: 600;">Stremio</div>
+                                <div style="font-size: 0.75rem; color: var(--text-dim);">Addon URL</div>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="connection-type {{ $playlist->type == 'mxl' ? 'active' : '' }}" id="label-mxl">
+                        <input type="radio" name="type" value="mxl" style="display: none;" {{ $playlist->type == 'mxl' ? 'checked' : '' }}>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div class="radio-circle"></div>
+                            <div>
+                                <div style="font-weight: 600;">MXL / Otros</div>
+                                <div style="font-size: 0.75rem; color: var(--text-dim);">Enlace Externo</div>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="connection-type {{ $playlist->type == 'direct' ? 'active' : '' }}" id="label-direct">
+                        <input type="radio" name="type" value="direct" style="display: none;" {{ $playlist->type == 'direct' ? 'checked' : '' }}>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div class="radio-circle"></div>
+                            <div>
+                                <div style="font-weight: 600;">Enlace Directo</div>
+                                <div style="font-size: 0.75rem; color: var(--text-dim);">MP4 / MKV / HLS</div>
                             </div>
                         </div>
                     </label>

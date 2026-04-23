@@ -41,7 +41,7 @@ class IPTVAdminController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:xtream,m3u',
+            'type' => 'required|in:xtream,m3u,stremio,mxl,direct',
             'url'  => 'required|url',
             'username' => 'required_if:type,xtream',
             'password' => 'required_if:type,xtream',
@@ -70,7 +70,7 @@ class IPTVAdminController extends Controller
         
         $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:xtream,m3u',
+            'type' => 'required|in:xtream,m3u,stremio,mxl,direct',
             'url'  => 'required|url',
             'username' => 'required_if:type,xtream',
             'password' => 'required_if:type,xtream',
@@ -107,8 +107,10 @@ class IPTVAdminController extends Controller
         try {
             if ($playlist->type === 'xtream') {
                 $xtreamService->sync($playlist);
-            } else {
+            } elseif ($playlist->type === 'm3u') {
                 $m3uService->parseAndStore($playlist);
+            } else {
+                return redirect()->back()->with('success', 'Esta fuente no requiere sincronización manual, la App la cargará directamente.');
             }
 
             return redirect()->back()->with('success', 'Sincronización completada exitosamente.');
