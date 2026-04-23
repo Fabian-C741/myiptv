@@ -21,6 +21,7 @@ class ConfigController extends Controller
             'primary_color' => Setting::get('primary_color', '#ff3333'),
             'secondary_color' => Setting::get('secondary_color', '#00aaff'),
             'app_logo' => Setting::get('app_logo'),
+            'whatsapp_contact' => Setting::get('whatsapp_contact', '+5491100000000'),
         ];
 
         return view('admin.config.index', compact('settings'));
@@ -36,6 +37,7 @@ class ConfigController extends Controller
             'app_logo' => Setting::get('app_logo') ? url(Storage::url(Setting::get('app_logo'))) : null,
             'current_version' => Setting::get('app_version'),
             'apk_url' => Setting::get('app_apk_url'),
+            'whatsapp_contact' => Setting::get('whatsapp_contact', '+5491100000000'),
             'default_max_devices' => config('ott.default_max_devices'),
         ]);
     }
@@ -51,6 +53,7 @@ class ConfigController extends Controller
             'app_apk_url' => 'sometimes|url|nullable',
             'primary_color' => 'sometimes|string',
             'secondary_color' => 'sometimes|string',
+            'whatsapp_contact' => 'sometimes|string',
             'logo_file' => 'sometimes|image|mimes:png,jpg,jpeg|max:2048'
         ]);
 

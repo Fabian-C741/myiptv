@@ -79,8 +79,9 @@
                     <input type="color" name="primary_color" value="{{ $settings['primary_color'] }}" style="width: 100%; height: 45px; cursor: pointer; background: none; border: none;">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Color Secundario</label>
-                    <input type="color" name="secondary_color" value="{{ $settings['secondary_color'] }}" style="width: 100%; height: 45px; cursor: pointer; background: none; border: none;">
+                    <label class="form-label">Contacto Soporte (WhatsApp)</label>
+                    <input type="text" name="whatsapp_contact" class="form-input" value="{{ $settings['whatsapp_contact'] }}" placeholder="+5491100000000">
+                    <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">Incluye el código de país (ej: +54 para Argentina).</p>
                 </div>
             </div>
 
