@@ -18,68 +18,64 @@ class M3uParserService
         $playlist->channelGroups()->delete();
 
         $lines = explode("\n", $response->body());
-        $groups = []; // cache array
+        $groups = [];
+        $lineCount = count($lines);
         
-        foreach ($lines as $index => $line) {
-            $line = trim($line);
-            if (empty($line)) continue;
+        for ($i = 0; $i < $lineCount; $i++) {
+            $line = trim($lines[$i]);
+            if (empty($line) || strpos($line, '#EXTINF:') !== 0) continue;
 
-            if (strpos($line, '#EXTINF:') === 0) {
-                // Parse attributes
-                preg_match('/group-title="([^"]+)"/i', $line, $groupMatch);
-                preg_match('/tvg-logo="([^"]+)"/i', $line, $logoMatch);
-                
-                // Get Name
-                $parts = explode(',', $line);
-                $name = trim(end($parts));
-                
-                // Filtro Anti-Basura: Si el nombre tiene muchos puntos y coma o es un separador
-                if (strpos($name, ';') !== false && substr_count($name, ';') > 1) {
-                    continue;
+            // --- PARSEAR CABECERA #EXTINF ---
+            preg_match('/group-title="([^"]+)"/i', $line, $groupMatch);
+            preg_match('/tvg-logo="([^"]+)"/i', $line, $logoMatch);
+            
+            // Nombre: Todo lo que esté después de la última coma
+            $parts = explode(',', $line);
+            $name = count($parts) > 1 ? trim(end($parts)) : "Canal Desconocido";
+            
+            // --- BUSCAR LA URL (Puede no estar en la línea inmediatamente siguiente) ---
+            $url = "";
+            for ($j = $i + 1; $j < $lineCount; $j++) {
+                $nextLine = trim($lines[$j]);
+                if (empty($nextLine)) continue;
+                if (strpos($nextLine, '#') === 0) {
+                    // Si encontramos otra etiqueta antes de la URL, algo está mal o es una etiqueta extra
+                    if (strpos($nextLine, '#EXTINF') === 0) break; // Siguiente canal, abortar búsqueda
+                    continue; 
                 }
-                
-                $groupName = $groupMatch[1] ?? 'Uncategorized';
+                $url = $nextLine;
+                $i = $j; // Saltamos a esta línea para el siguiente ciclo del loop principal
+                break;
+            }
+
+            if (!empty($url)) {
+                $groupName = $groupMatch[1] ?? 'General';
                 $logo = $logoMatch[1] ?? null;
                 
-                // Detect Type
+                // Categorización Simple
                 $type = 'live';
                 $lowerGroup = strtolower($groupName);
-                $lowerName = strtolower($name);
+                if (strpos($lowerGroup, 'movie') !== false || strpos($lowerGroup, 'peli') !== false) $type = 'movie';
+                if (strpos($lowerGroup, 'series') !== false || strpos($lowerGroup, 'episodio') !== false) $type = 'series';
 
-                if (strpos($lowerGroup, 'movie') !== false || strpos($lowerGroup, 'peli') !== false || strpos($lowerGroup, 'cinema') !== false || strpos($lowerGroup, 'vod') !== false) {
-                    $type = 'movie';
-                } elseif (strpos($lowerGroup, 'series') !== false || strpos($lowerGroup, 'tv show') !== false || preg_match('/s\d{1,2}e\d{1,2}/i', $name)) {
-                    $type = 'series';
+                if (!isset($groups[$groupName])) {
+                    $groupModel = ChannelGroup::updateOrCreate(
+                        ['playlist_id' => $playlist->id, 'name' => $groupName, 'type' => $type],
+                        ['is_adult' => false]
+                    );
+                    $groups[$groupName] = $groupModel->id;
                 }
 
-                $isAdult = (strpos($lowerGroup, 'adult') !== false || strpos($lowerName, 'adult') !== false || strpos($lowerGroup, 'xxx') !== false);
-                
-                // Get URL on next line
-                $url = trim($lines[$index + 1] ?? '');
-                
-                if (!empty($url) && strpos($url, '#') !== 0) {
-                    if (!isset($groups[$groupName])) {
-                        $groupModel = ChannelGroup::updateOrCreate([
-                            'playlist_id' => $playlist->id,
-                            'name' => $groupName,
-                            'type' => $type
-                        ], ['is_adult' => $isAdult]);
-                        $groups[$groupName] = $groupModel->id;
-                    }
-
-                    // For M3U, treats series episodes as single movies usually, 
-                    // unless we implement complex parsing. For now, categorize them.
-                    Channel::updateOrCreate([
-                        'playlist_id' => $playlist->id,
-                        'stream_url' => $url,
-                    ], [
+                Channel::updateOrCreate(
+                    ['playlist_id' => $playlist->id, 'stream_url' => $url],
+                    [
                         'channel_group_id' => $groups[$groupName],
                         'type' => $type,
                         'name' => $name,
                         'logo' => $logo,
-                        'is_adult' => $isAdult
-                    ]);
-                }
+                        'is_active' => true
+                    ]
+                );
             }
         }
         return true;
