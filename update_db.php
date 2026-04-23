@@ -1,67 +1,28 @@
 <?php
-/**
- * ACTUALIZADOR DE BASE DE DATOS - ELECTROFABIPTV
- * Ejecuta este archivo una sola vez para activar la tabla de ajustes.
- */
+// Script para forzar la configuración de marca en la DB
+require __DIR__.'/vendor/autoload.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// Detectar base de Laravel (si está en el root o en /public)
-$basePath = __DIR__;
-if (!file_exists($basePath.'/vendor/autoload.php')) {
-    $basePath = dirname(__DIR__); // Probar un nivel arriba
-}
-
-if (!file_exists($basePath.'/vendor/autoload.php')) {
-    die("ERROR: No se encontró la carpeta 'vendor'. Asegúrate de subir todos los archivos del proyecto.");
-}
-
-require $basePath.'/vendor/autoload.php';
-$app = require_once $basePath.'/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->bootstrap();
-
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$kernel->handle($request = Illuminate\Http\Request::capture());
+
 try {
-    echo "=== ACTUALIZANDO BASE DE DATOS (Electrofabiptv) ===\n\n";
-
-    // 1. Crear tabla de ajustes si no existe
-    if (!Schema::hasTable('settings')) {
-        echo "1. Creando tabla 'settings'...";
-        Schema::create('settings', function (Blueprint $table) {
-            $table->id();
-            $table->string('key')->unique();
-            $table->longText('value')->nullable();
-            $table->string('type')->default('string');
-            $table->timestamps();
-        });
-        echo " [OK]\n";
-    }
-
-    // 2. Insertar valores iniciales de marca
-    $defaults = [
-        ['key' => 'app_name', 'value' => 'Electrofabiptv', 'type' => 'string'],
-        ['key' => 'app_version', 'value' => '1.0.0', 'type' => 'string'],
-        ['key' => 'primary_color', 'value' => '#00aaff', 'type' => 'string'],
-        ['key' => 'secondary_color', 'value' => '#ff3333', 'type' => 'string'],
-        ['key' => 'app_logo', 'value' => null, 'type' => 'image'],
-        ['key' => 'apk_url', 'value' => null, 'type' => 'string'],
-    ];
-
-    foreach ($defaults as $row) {
-        if (!DB::table('settings')->where('key', $row['key'])->exists()) {
-            DB::table('settings')->insert(array_merge($row, ['created_at' => now(), 'updated_at' => now()]));
-        }
-    }
-    echo "2. Valores de marca inicializados... [OK]\n";
-
-    echo "\n¡LISTO! Ya puedes borrar este archivo y entrar a Ajustes en tu Panel Web.";
+    // Forzamos los valores base
+    Setting::set('app_name', 'ELECTROFABI IPTV');
+    Setting::set('app_version', '2.0.0'); // Ponemos una versión alta para forzar el aviso
+    Setting::set('app_apk_url', 'https://streaming-iptv.kcrsf.com/storage/updates/Electrofabiptv.apk');
+    
+    echo "<h1>✅ Base de datos actualizada</h1>";
+    echo "<p>Nombre: ELECTROFABI IPTV</p>";
+    echo "<p>Versión forzada: 2.0.0</p>";
+    echo "<p>URL APK: https://streaming-iptv.kcrsf.com/storage/updates/Electrofabiptv.apk</p>";
+    echo "<hr>";
+    echo "<p>Ahora abre la App en tu móvil. Si tiene internet, DEBERÍA salir el cartel de actualización inmediatamente.</p>";
 
 } catch (\Exception $e) {
-    echo "ERROR CRÍTICO: " . $e->getMessage();
+    echo "<h1>❌ Error</h1>";
+    echo $e->getMessage();
 }
