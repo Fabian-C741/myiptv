@@ -10,8 +10,15 @@ class M3uParserService
 {
     public function parseAndStore(Playlist $playlist)
     {
-        $response = Http::timeout(120)->get($playlist->url);
-        if (!$response->successful()) { return false; }
+        // Petición con User-Agent para evitar bloqueos (Ej. GitHub)
+        $response = Http::withHeaders([
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        ])->timeout(120)->get($playlist->url);
+
+        if (!$response->successful()) { 
+            \Illuminate\Support\Facades\Log::error("M3U Fetch Error: " . $response->status() . " - " . $playlist->url);
+            return false; 
+        }
 
         // --- LIMPIEZA PREVIA ---
         $playlist->channels()->delete();
