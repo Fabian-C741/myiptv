@@ -11,6 +11,16 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="card" style="background: rgba(255, 51, 51, 0.1); color: #ff3333; border-color: #ff3333; margin-bottom: 2rem;">
+            <ul>
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="card" style="overflow: hidden;">
         <div style="padding: 2rem; border-bottom: 1px solid var(--border); background: linear-gradient(to right, rgba(0, 170, 255, 0.05), rgba(255, 51, 51, 0.05));">
             <h3 style="margin-bottom: 10px;">Identidad de la Plataforma</h3>

@@ -58,6 +58,10 @@ class ConfigController extends Controller
             Setting::set($key, $value);
         }
 
+        $request->validate([
+            'apk_file' => 'nullable|file|max:102400', // Máximo 100MB
+        ]);
+
         if ($request->hasFile('logo_file')) {
             $path = $request->file('logo_file')->store('public/brand');
             Setting::set('app_logo', $path);
@@ -65,21 +69,25 @@ class ConfigController extends Controller
 
         // Lógica Automática para el APK
         if ($request->hasFile('apk_file')) {
-            // 1. Guardar el archivo APK
-            $apkName = 'Electrofabiptv.apk';
-            $request->file('apk_file')->storeAs('public/updates', $apkName);
-            
-            // 2. Generar la URL automática
-            $apkUrl = url(Storage::url('updates/' . $apkName));
-            Setting::set('app_apk_url', $apkUrl);
+            try {
+                // 1. Guardar el archivo APK
+                $apkName = 'Electrofabiptv.apk';
+                $request->file('apk_file')->storeAs('public/updates', $apkName);
+                
+                // 2. Generar la URL automática
+                $apkUrl = url(Storage::url('updates/' . $apkName));
+                Setting::set('app_apk_url', $apkUrl);
 
-            // 3. Auto-incrementar la versión
-            $currentVersion = Setting::get('app_version', '1.0.0');
-            $parts = explode('.', $currentVersion);
-            if (count($parts) == 3) {
-                $parts[2] = (int)$parts[2] + 1; // Incrementamos el último número
-                $newVersion = implode('.', $parts);
-                Setting::set('app_version', $newVersion);
+                // 3. Auto-incrementar la versión
+                $currentVersion = Setting::get('app_version', '1.0.0');
+                $parts = explode('.', $currentVersion);
+                if (count($parts) == 3) {
+                    $parts[2] = (int)$parts[2] + 1; // Incrementamos el último número
+                    $newVersion = implode('.', $parts);
+                    Setting::set('app_version', $newVersion);
+                }
+            } catch (\Exception $e) {
+                return back()->withErrors(['apk_file' => 'Error al guardar el APK: ' . $e->getMessage()]);
             }
         }
 
