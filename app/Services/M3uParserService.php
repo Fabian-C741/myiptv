@@ -20,64 +20,63 @@ class M3uParserService
         $lines = explode("\n", $response->body());
         $groups = [];
         $lineCount = count($lines);
+        $foundChannels = false;
         
         for ($i = 0; $i < $lineCount; $i++) {
             $line = trim($lines[$i]);
             if (empty($line) || strpos($line, '#EXTINF:') !== 0) continue;
 
-            // --- PARSEAR CABECERA #EXTINF ---
+            $foundChannels = true;
+            // ... (resto del código de parseo de #EXTINF)
             preg_match('/group-title="([^"]+)"/i', $line, $groupMatch);
             preg_match('/tvg-logo="([^"]+)"/i', $line, $logoMatch);
-            
-            // Nombre: Todo lo que esté después de la última coma
             $parts = explode(',', $line);
             $name = count($parts) > 1 ? trim(end($parts)) : "Canal Desconocido";
             
-            // --- BUSCAR LA URL (Puede no estar en la línea inmediatamente siguiente) ---
             $url = "";
             for ($j = $i + 1; $j < $lineCount; $j++) {
                 $nextLine = trim($lines[$j]);
                 if (empty($nextLine)) continue;
                 if (strpos($nextLine, '#') === 0) {
-                    // Si encontramos otra etiqueta antes de la URL, algo está mal o es una etiqueta extra
-                    if (strpos($nextLine, '#EXTINF') === 0) break; // Siguiente canal, abortar búsqueda
+                    if (strpos($nextLine, '#EXTINF') === 0) break;
                     continue; 
                 }
                 $url = $nextLine;
-                $i = $j; // Saltamos a esta línea para el siguiente ciclo del loop principal
+                $i = $j;
                 break;
             }
 
             if (!empty($url)) {
                 $groupName = $groupMatch[1] ?? 'General';
-                $logo = $logoMatch[1] ?? null;
-                
-                // Categorización Simple
-                $type = 'live';
-                $lowerGroup = strtolower($groupName);
-                if (strpos($lowerGroup, 'movie') !== false || strpos($lowerGroup, 'peli') !== false) $type = 'movie';
-                if (strpos($lowerGroup, 'series') !== false || strpos($lowerGroup, 'episodio') !== false) $type = 'series';
-
-                if (!isset($groups[$groupName])) {
-                    $groupModel = ChannelGroup::updateOrCreate(
-                        ['playlist_id' => $playlist->id, 'name' => $groupName, 'type' => $type],
-                        ['is_adult' => false]
-                    );
-                    $groups[$groupName] = $groupModel->id;
-                }
-
-                Channel::updateOrCreate(
-                    ['playlist_id' => $playlist->id, 'stream_url' => $url],
-                    [
-                        'channel_group_id' => $groups[$groupName],
-                        'type' => $type,
-                        'name' => $name,
-                        'logo' => $logo,
-                        'is_active' => true
-                    ]
-                );
+                $this->storeChannel($playlist, $url, $name, $groupName, $logoMatch[1] ?? null);
             }
         }
-        return true;
+
+        // --- FALLBACK: Si no hay #EXTINF pero es un M3U8 válido (Master Manifest) ---
+        if (!$foundChannels && (strpos($response->body(), '#EXTM3U') !== false)) {
+            $this->storeChannel($playlist, $playlist->url, $playlist->name, 'Directo');
+            return true;
+        }
+
+        return $foundChannels;
+    }
+
+    private function storeChannel($playlist, $url, $name, $groupName, $logo = null)
+    {
+        $group = ChannelGroup::updateOrCreate(
+            ['playlist_id' => $playlist->id, 'name' => $groupName, 'type' => 'live'],
+            ['is_adult' => false]
+        );
+
+        Channel::updateOrCreate(
+            ['playlist_id' => $playlist->id, 'stream_url' => $url],
+            [
+                'channel_group_id' => $group->id,
+                'type' => 'live',
+                'name' => $name,
+                'logo' => $logo,
+                'is_active' => true
+            ]
+        );
     }
 }
