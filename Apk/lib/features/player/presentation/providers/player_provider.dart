@@ -129,8 +129,13 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
     }
   }
 
-  void setAudioTrack(AudioTrack track) {
-    state.player.setAudioTrack(track);
+  Future<void> setAudioTrack(AudioTrack track) async {
+    await state.player.setAudioTrack(track);
+    if (state.isPlaying) {
+        await state.player.pause();
+        await Future.delayed(const Duration(milliseconds: 300));
+        await state.player.play();
+    }
     state = state.copyWith(activeAudioTrack: track);
   }
 

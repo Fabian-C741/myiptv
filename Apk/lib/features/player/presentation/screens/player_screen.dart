@@ -141,7 +141,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
-        onTap: _isLocked ? () => setState(() => _showControls = !_showControls) : _resetTimer,
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+            if (_isLocked) {
+                setState(() => _showControls = !_showControls);
+            } else {
+                _resetTimer();
+            }
+        },
         onVerticalDragUpdate: _isLocked ? null : (details) {
             final double delta = details.primaryDelta! / MediaQuery.of(context).size.height;
             if (details.globalPosition.dx < MediaQuery.of(context).size.width / 2) {
