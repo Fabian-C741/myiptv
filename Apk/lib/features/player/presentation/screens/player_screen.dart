@@ -57,6 +57,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   void dispose() {
+    final player = ref.read(playerProvider('global')).player;
+    player.stop(); // Detener el video inmediatamente
+    
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
