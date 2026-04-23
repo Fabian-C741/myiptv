@@ -70,20 +70,31 @@ class M3uParserService
 
     private function storeChannel($playlist, $url, $name, $groupName, $logo = null)
     {
-        $group = ChannelGroup::updateOrCreate(
-            ['playlist_id' => $playlist->id, 'name' => $groupName, 'type' => 'live'],
-            ['is_adult' => false]
-        );
+        // Truncar para evitar errores SQL "Data too long" (límite por defecto de Laravel string = 255)
+        $safeUrl = substr($url, 0, 250);
+        $safeLogo = $logo ? substr($logo, 0, 250) : null;
+        $safeName = substr($name, 0, 200);
+        $safeGroupName = substr($groupName, 0, 100);
 
-        Channel::updateOrCreate(
-            ['playlist_id' => $playlist->id, 'stream_url' => $url],
-            [
-                'channel_group_id' => $group->id,
-                'type' => 'live',
-                'name' => $name,
-                'logo' => $logo,
-                'is_active' => true
-            ]
-        );
+        try {
+            $group = ChannelGroup::updateOrCreate(
+                ['playlist_id' => $playlist->id, 'name' => $safeGroupName, 'type' => 'live'],
+                ['is_adult' => false]
+            );
+
+            Channel::updateOrCreate(
+                ['playlist_id' => $playlist->id, 'stream_url' => $safeUrl],
+                [
+                    'channel_group_id' => $group->id,
+                    'type' => 'live',
+                    'name' => $safeName,
+                    'logo' => $safeLogo,
+                    'is_active' => true
+                ]
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error guardando canal $safeName: " . $e->getMessage());
+            // Si un canal falla, ignorar y continuar con el resto
+        }
     }
 }
