@@ -27,19 +27,47 @@ try {
     // Contar ocurrencias manuales
     $extinf_count = substr_count($body, '#EXTINF:');
 
+    // Vamos a intentar guardar el primer canal encontrado para forzar a la DB a darnos el error
+    $db_error = 'Ninguno. Se guardó correctamente.';
+    
+    // Buscar la primera URL y el primer nombre en el preview
+    preg_match('/group-title="([^"]+)"/i', $body, $groupMatch);
+    $safeGroupName = substr($groupMatch[1] ?? 'General', 0, 100);
+    
+    // Buscar primera URL que empiece con http
+    preg_match('/(https?:\/\/[^\r\n]+)/', $body, $urlMatch);
+    $safeUrl = substr($urlMatch[1] ?? 'http://test.com', 0, 250);
+    
+    try {
+        $group = \App\Models\ChannelGroup::updateOrCreate(
+            ['playlist_id' => $playlist->id, 'name' => $safeGroupName, 'type' => 'live'],
+            ['is_adult' => false]
+        );
+
+        \App\Models\Channel::updateOrCreate(
+            ['playlist_id' => $playlist->id, 'stream_url' => $safeUrl],
+            [
+                'channel_group_id' => $group->id,
+                'type' => 'live',
+                'name' => 'Prueba Diagnostico',
+                'logo' => null,
+                'is_adult' => false
+            ]
+        );
+    } catch (\Exception $e) {
+        $db_error = $e->getMessage();
+    }
+
     $stats = [
         'lista_nombre' => $playlist->name,
-        'lista_url' => $playlist->url,
         'http_status' => $response->status(),
-        'body_length' => strlen($body),
         'etiquetas_extinf_encontradas' => $extinf_count,
-        'vista_previa_contenido' => $preview
+        'ERROR_DE_BASE_DE_DATOS_EXACTO' => $db_error,
+        'vista_previa' => $preview
     ];
 
     echo json_encode($stats, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
 } catch (\Exception $e) {
-    echo json_encode([
-        'error_fatal' => $e->getMessage()
-    ]);
+    echo json_encode(['error_fatal' => $e->getMessage()]);
 }
