@@ -16,16 +16,6 @@ class OttApp extends ConsumerStatefulWidget {
 
 class _OttAppState extends ConsumerState<OttApp> {
   @override
-  void initState() {
-    super.initState();
-    // Iniciar verificación de actualización tras el primer frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final dio = DioClient(SecureStorageService());
-      AppUpdateService(dio).checkForUpdates(context);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'ELECTROFABI IPTV',
