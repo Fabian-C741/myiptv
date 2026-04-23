@@ -21,8 +21,20 @@ class AppVODController extends Controller
                 $table->id();
                 $table->string('name');
                 $table->string('manifest_url')->unique();
+                $table->string('icon')->nullable();
+                $table->json('catalog_types')->nullable();
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();
+            });
+        } else {
+            // Si la tabla ya existe (por versiones anteriores), asegurarnos de que tenga las columnas faltantes
+            \Illuminate\Support\Facades\Schema::table('stremio_addons', function ($table) {
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('stremio_addons', 'icon')) {
+                    $table->string('icon')->nullable();
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('stremio_addons', 'catalog_types')) {
+                    $table->json('catalog_types')->nullable();
+                }
             });
         }
 
