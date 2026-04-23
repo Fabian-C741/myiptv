@@ -38,12 +38,18 @@ class AppUpdateService {
   }
 
   bool _isVersionGreater(String server, String local) {
-    List<int> s = server.split('.').map(int.parse).toList();
-    List<int> l = local.split('.').map(int.parse).toList();
-    
-    for (int i = 0; i < s.length; i++) {
-      if (s[i] > l[i]) return true;
-      if (s[i] < l[i]) return false;
+    try {
+      List<String> sParts = server.split('.');
+      List<String> lParts = local.split('.');
+      int length = sParts.length > lParts.length ? sParts.length : lParts.length;
+      for (int i = 0; i < length; i++) {
+        int s = i < sParts.length ? int.parse(sParts[i].replaceAll(RegExp(r'[^0-9]'), '')) : 0;
+        int l = i < lParts.length ? int.parse(lParts[i].replaceAll(RegExp(r'[^0-9]'), '')) : 0;
+        if (s > l) return true;
+        if (s < l) return false;
+      }
+    } catch (e) {
+      return server != local;
     }
     return false;
   }
@@ -57,7 +63,7 @@ class AppUpdateService {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.system_update, color: Colors.blueAccent),
+            const Icon(Icons.system_update, color: AppTheme.primaryRed),
             const SizedBox(width: 12),
             const Text('Nueva Versión', style: TextStyle(color: Colors.white)),
           ],
@@ -86,9 +92,11 @@ class AppUpdateService {
   }
 
   Future<void> _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
+    try {
+      final uri = Uri.parse(url);
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      // Error silencioso
     }
   }
 }
