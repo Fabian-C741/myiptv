@@ -53,5 +53,38 @@
             </div>
         </form>
     </div>
+
+    <div class="card" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 10px;">
+            <i data-lucide="users" size="20" style="color: var(--primary);"></i>
+            Perfiles Disponibles
+        </h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1.5rem;">
+            @forelse($user->profiles as $profile)
+                <div style="text-align: center;">
+                    <div style="width: 100px; height: 100px; margin: 0 auto 0.75rem; border-radius: 12px; overflow: hidden; background: #222; border: 2px solid rgba(255,255,255,0.05);">
+                        @if($profile->avatar_url)
+                            <img src="{{ asset('storage/' . $profile->avatar_url) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        @else
+                            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; font-size: 2rem; font-weight: bold;">
+                                {{ substr($profile->name, 0, 1) }}
+                            </div>
+                        @endif
+                    </div>
+                    <div style="font-weight: 600; font-size: 0.9rem;">{{ $profile->name }}</div>
+                    @if($profile->pin)
+                        <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 3px;">
+                            <i data-lucide="lock" size="10" style="display: inline-block;"></i> PIN Activo
+                        </div>
+                    @endif
+                </div>
+            @empty
+                <p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim); padding: 1rem;">
+                    Este usuario aún no ha creado perfiles.
+                </p>
+            @endforelse
+        </div>
+    </div>
 </div>
 @endsection
