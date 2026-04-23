@@ -156,7 +156,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   
                   TextButton.icon(
                     onPressed: _contactSupport,
-                    icon: const Icon(Icons.whatsapp, color: Colors.green),
+                    icon: const Icon(Icons.chat, color: Colors.green),
                     label: const Text('Contactar Soporte (WhatsApp)', style: TextStyle(color: Colors.white)),
                   ),
                 ],
