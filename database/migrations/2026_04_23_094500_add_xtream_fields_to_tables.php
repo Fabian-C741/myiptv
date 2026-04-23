@@ -10,21 +10,21 @@ return new class extends Migration
     {
         Schema::table('external_sources', function (Blueprint $blueprint) {
             if (!Schema::hasColumn('external_sources', 'username')) {
-                $blueprint.string('username')->nullable();
-                $blueprint.string('password')->nullable();
+                $blueprint->string('username')->nullable();
+                $blueprint->string('password')->nullable();
             }
         });
 
         Schema::table('channel_groups', function (Blueprint $blueprint) {
             if (!Schema::hasColumn('channel_groups', 'external_id')) {
-                $blueprint.string('external_id')->nullable();
-                $blueprint.unsignedBigInteger('source_id')->nullable();
+                $blueprint->string('external_id')->nullable();
+                $blueprint->unsignedBigInteger('source_id')->nullable();
             }
         });
         
         Schema::table('channels', function (Blueprint $blueprint) {
             if (!Schema::hasColumn('channels', 'source_id')) {
-                $blueprint.unsignedBigInteger('source_id')->nullable();
+                $blueprint->unsignedBigInteger('source_id')->nullable();
             }
         });
     }
