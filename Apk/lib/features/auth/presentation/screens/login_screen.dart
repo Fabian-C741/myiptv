@@ -148,16 +148,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  const Text(
-                    '¿No tienes cuenta?',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                  
-                  TextButton.icon(
+                  TextButton(
                     onPressed: _contactSupport,
-                    icon: const Icon(Icons.chat, color: Colors.green),
-                    label: const Text('Contactar Soporte (WhatsApp)', style: TextStyle(color: Colors.white)),
+                    child: const Text('¿Necesitas ayuda?', style: TextStyle(color: Colors.white70)),
                   ),
                 ],
               ),
