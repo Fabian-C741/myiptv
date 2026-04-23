@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:dio/dio.dart';
 import '../network/dio_client.dart';
 import '../config/app_config.dart';
+import '../../core/theme/app_theme.dart';
 
 class AppUpdateService {
   final DioClient _dio;
