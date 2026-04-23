@@ -6,9 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class ChannelGroup extends Model
 {
-    protected $fillable = ['playlist_id', 'name', 'type', 'ext_id', 'is_adult'];
-    protected $casts = ['is_adult' => 'boolean'];
+    protected $fillable = ['name', 'slug', 'type', 'external_id', 'source_id'];
 
-    public function playlist() { return $this->belongsTo(Playlist::class); }
-    public function channels() { return $this->hasMany(Channel::class); }
+    public function channels()
+    {
+        return $this->hasMany(Channel::class, 'channel_group_id');
+    }
 }
