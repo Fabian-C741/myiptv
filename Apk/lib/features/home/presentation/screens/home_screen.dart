@@ -48,28 +48,59 @@ class HomeScreen extends ConsumerWidget {
     final filter = ref.watch(homeFilterProvider);
     final category = ref.watch(homeCategoryProvider);
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (homeState.featuredChannels.isNotEmpty && filter == 'all' && category == null)
-            _HeroBanner(channels: homeState.featuredChannels),
-          const SizedBox(height: 8),
-          if ((filter == 'all' || filter == 'live') && category == null)
-            _Section(title: 'TV en Vivo', channels: homeState.recentChannels),
-          if ((filter == 'all' || filter == 'movie') && category == null)
-            _Section(title: 'Películas', channels: homeState.movies),
-          if ((filter == 'all' || filter == 'series') && category == null)
-            _Section(title: 'Series', channels: homeState.series),
-          if (category != null)
-            _Section(
-              title: category,
-              channels: (homeState.recentChannels + homeState.movies + homeState.series)
-                  .where((c) => c.groupId.toString() == category)
-                  .toList(),
-            ),
-          const SizedBox(height: 100),
-        ],
+    return RefreshIndicator(
+      onRefresh: () => ref.read(homeProvider.notifier).initHome(),
+      color: AppTheme.primaryRed,
+      backgroundColor: Colors.black,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (homeState.featuredChannels.isEmpty && 
+                homeState.recentChannels.isEmpty && 
+                homeState.movies.isEmpty && 
+                homeState.series.isEmpty)
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.7,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cloud_off, color: Colors.white24, size: 80),
+                      const SizedBox(height: 16),
+                      const Text('Aún no hay contenido disponible', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      const Text('Sincroniza tus fuentes en el panel admin.', style: TextStyle(color: Colors.white54)),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () => ref.read(homeProvider.notifier).initHome(),
+                        child: const Text('Reintentar'),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            
+            if (homeState.featuredChannels.isNotEmpty && filter == 'all' && category == null)
+              _HeroBanner(channels: homeState.featuredChannels),
+            const SizedBox(height: 8),
+            if ((filter == 'all' || filter == 'live') && category == null)
+              _Section(title: 'TV en Vivo', channels: homeState.recentChannels),
+            if ((filter == 'all' || filter == 'movie') && category == null)
+              _Section(title: 'Películas', channels: homeState.movies),
+            if ((filter == 'all' || filter == 'series') && category == null)
+              _Section(title: 'Series', channels: homeState.series),
+            if (category != null)
+              _Section(
+                title: category,
+                channels: (homeState.recentChannels + homeState.movies + homeState.series)
+                    .where((c) => c.groupId.toString() == category)
+                    .toList(),
+              ),
+            const SizedBox(height: 100),
+          ],
+        ),
       ),
     );
   }

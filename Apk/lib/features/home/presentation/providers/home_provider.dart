@@ -117,7 +117,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 }
 
-final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
+final homeProvider = StateNotifierProvider.autoDispose<HomeNotifier, HomeState>((ref) {
   return HomeNotifier(
     ref.watch(liveTvDataSourceProvider),
     ref.watch(vodDataSourceProvider),
