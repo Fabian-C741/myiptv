@@ -15,35 +15,8 @@ class AppVODController extends Controller
      */
     public function getCatalogs()
     {
-        return Cache::remember('stremio_catalogs', 3600, function () {
-            $addons = StremioAddon::where('is_active', true)->get();
-            $consolidated = [];
-
-            foreach ($addons as $addon) {
-                try {
-                    // Consultamos el manifest para ver qué catálogos tiene
-                    $response = Http::timeout(5)->get($addon->manifest_url);
-                    if ($response->successful()) {
-                        $manifest = $response->json();
-                        
-                        // Por cada catálogo (movie, series, etc)
-                        foreach ($manifest['catalogs'] ?? [] as $catalog) {
-                            $consolidated[] = [
-                                'addon_name' => $addon->name,
-                                'addon_url' => str_replace('manifest.json', '', $addon->manifest_url),
-                                'type' => $catalog['type'],
-                                'id' => $catalog['id'],
-                                'name' => $catalog['name'] ?? $addon->name,
-                            ];
-                        }
-                    }
-                } catch (\Exception $e) {
-                    continue;
-                }
-            }
-
-            return response()->json($consolidated);
-        });
+        // Desactivado temporalmente para evitar errores 500 si la tabla no existe
+        return response()->json([]);
     }
 
     /**

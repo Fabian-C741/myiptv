@@ -13,7 +13,6 @@ $stats = [
     'estado' => 'OK',
     'canales_totales' => Channel::count(),
     'grupos_totales' => ChannelGroup::count(),
-    'addons_stremio' => StremioAddon::count(),
     'ultimos_5_canales' => Channel::latest()->take(5)->get(['name', 'type']),
 ];
 

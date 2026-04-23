@@ -103,16 +103,16 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
       state = state.copyWith(
         isLoading: false,
-        featuredChannels: [...stremioMovies.take(5), ...stremioSeries.take(5)], 
-        recentChannels: channels.take(15).toList(),
+        featuredChannels: channels.where((c) => c.logo != null).take(10).toList(), // Priorizar tus canales con logo
+        recentChannels: channels.take(20).toList(),
         movies: stremioMovies,
         series: stremioSeries,
         categories: categories,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Error de conexión. Reintentando...');
-      // Reintento automático en 5 segundos si es un error crítico
-      Future.delayed(const Duration(seconds: 5), () => initHome());
+      if (mounted) {
+        state = state.copyWith(isLoading: false, error: 'Carga completada con algunas advertencias.');
+      }
     }
   }
 }
