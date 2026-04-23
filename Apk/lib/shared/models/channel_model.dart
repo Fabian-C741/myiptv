@@ -14,6 +14,12 @@ class ChannelModel {
   final int? tmdbId;
   final List<SeasonModel>? seasons;
   
+  // Soporte para fuentes externas (Stremio/MXL)
+  final bool isExternal;
+  final String? externalId;
+  final String? externalSource;
+  final String? addonBaseUrl;
+  
   // Limpiador de Nombres (Meta-Cleaner V1)
   String get displayName {
     return name
@@ -39,12 +45,16 @@ class ChannelModel {
     this.backdrop,
     this.tmdbId,
     this.seasons,
+    this.isExternal = false,
+    this.externalId,
+    this.externalSource,
+    this.addonBaseUrl,
   });
 
   factory ChannelModel.fromJson(Map<String, dynamic> json) {
     return ChannelModel(
-      id: json['id'],
-      name: json['name'],
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
       type: json['type'],
       streamUrl: json['stream_url'],
       logo: json['logo'],
@@ -61,6 +71,10 @@ class ChannelModel {
               .map((i) => SeasonModel.fromJson(i))
               .toList()
           : null,
+      isExternal: json['is_external'] ?? false,
+      externalId: json['external_id'],
+      externalSource: json['external_source'],
+      addonBaseUrl: json['addon_base_url'],
     );
   }
 }
