@@ -109,11 +109,9 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
         state = state.copyWith(error: 'URL de stream no disponible.');
         return;
       }
-      // Headers profesionales para evitar bloqueos
-      final media = Media(url, httpHeaders: {
-        'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
-        'Accept': '*/*',
-        'Connection': 'keep-alive',
+      // Headers de navegador estándar para evitar bloqueos de CDNs anti-VLC
+      final media = Media(url.trim(), httpHeaders: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
       });
       await state.player.open(media);
       await state.player.play();
