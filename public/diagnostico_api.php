@@ -3,9 +3,12 @@
 require __DIR__.'/../vendor/autoload.php';
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
+// Inicializar el Kernel para que las consultas a DB funcionen
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$kernel->handle(Illuminate\Http\Request::capture());
+
 use App\Models\Channel;
 use App\Models\ChannelGroup;
-use App\Models\StremioAddon;
 
 header('Content-Type: application/json');
 
