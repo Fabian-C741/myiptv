@@ -64,35 +64,55 @@ class HomeNotifier extends StateNotifier<HomeState> {
   Future<void> initHome() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // 1. Cargar canales en vivo
-      final channels = await _liveTvDataSource.getChannels(type: 'live');
-      final categories = await _liveTvDataSource.getCategories(type: 'live');
+      // 1. Cargar canales en vivo y categorías (En paralelo para velocidad)
+      final results = await Future.wait([
+        _liveTvDataSource.getChannels(type: 'live').timeout(const Duration(seconds: 5), onTimeout: () => []),
+        _liveTvDataSource.getCategories(type: 'live').timeout(const Duration(seconds: 5), onTimeout: () => []),
+      ]);
+
+      final List<ChannelModel> channels = results[0] as List<ChannelModel>;
+      final List<CategoryModel> categories = results[1] as List<CategoryModel>;
       
-      // 2. Cargar VOD de Stremio (Mínimo 1 catálogo por defecto para empezar)
+      // 2. Cargar VOD de Stremio (Con protección total contra lentitud)
       List<ChannelModel> stremioMovies = [];
       List<ChannelModel> stremioSeries = [];
       
-      final catalogs = await _vodDataSource.getStremioCatalogs();
-      for (final cat in catalogs.take(2)) {
-         final items = await _vodDataSource.getStremioItems(
+      try {
+        final catalogs = await _vodDataSource.getStremioCatalogs().timeout(const Duration(seconds: 3));
+        
+        // Cargamos los items de los primeros catálogos en paralelo
+        final List<Future<List<ChannelModel>>> catalogFutures = catalogs.take(4).map((cat) {
+          return _vodDataSource.getStremioItems(
             baseUrl: cat['addon_url'],
             type: cat['type'],
             id: cat['id'],
-         );
-         if (cat['type'] == 'movie') stremioMovies.addAll(items);
-         if (cat['type'] == 'series') stremioSeries.addAll(items);
+          ).timeout(const Duration(seconds: 4), onTimeout: () => []);
+        }).toList();
+
+        final itemsLists = await Future.wait(catalogFutures);
+        
+        for (int i = 0; i < itemsLists.length; i++) {
+            final type = catalogs[i]['type'];
+            if (type == 'movie') stremioMovies.addAll(itemsLists[i]);
+            if (type == 'series') stremioSeries.addAll(itemsLists[i]);
+        }
+      } catch (e) {
+        // Si falla Stremio, la App sigue funcionando con los canales en vivo
+        print('Error en Stremio: $e');
       }
 
       state = state.copyWith(
         isLoading: false,
-        featuredChannels: [...stremioMovies.take(3), ...stremioSeries.take(2)], 
-        recentChannels: channels.take(10).toList(),
+        featuredChannels: [...stremioMovies.take(5), ...stremioSeries.take(5)], 
+        recentChannels: channels.take(15).toList(),
         movies: stremioMovies,
         series: stremioSeries,
         categories: categories,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: 'Error de conexión. Reintentando...');
+      // Reintento automático en 5 segundos si es un error crítico
+      Future.delayed(const Duration(seconds: 5), () => initHome());
     }
   }
 }
