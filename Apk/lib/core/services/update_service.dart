@@ -14,48 +14,44 @@ class AppUpdateService {
 
   Future<void> checkForUpdates(BuildContext context) async {
     try {
-      debugPrint('🔄 [UpdateService] Verificando actualizaciones...');
+      debugPrint('Verificando actualizaciones...');
       
       final response = await _dio.instance.get('/app/config').timeout(
         const Duration(seconds: 10),
-        onTimeout: () {
-          debugPrint('⏱️ [UpdateService] Timeout - servidor no responde');
-          throw Exception('Timeout');
-        },
+        onTimeout: () => throw Exception('Timeout'),
       );
-      
-      debugPrint('📡 [UpdateService] Respuesta: ${response.statusCode}');
       
       if (response.statusCode == 200 && context.mounted) {
         final serverVersion = response.data['current_version'];
         final apkUrl = response.data['apk_url'];
 
-        debugPrint('🖥️ [UpdateService] Versión servidor: $serverVersion');
-        debugPrint('🔗 [UpdateService] APK URL: $apkUrl');
+        // всегда показываем версию (debug.visible)
+        _showDebugLog('Servidor: $serverVersion | Local: $apkUrl');
 
-        if (serverVersion == null || apkUrl == null || apkUrl.isEmpty) {
-          debugPrint('⚠️ [UpdateService] Datos incompletos');
-          return;
-        }
+        if (serverVersion == null || apkUrl == null || apkUrl.isEmpty) return;
 
         final packageInfo = await PackageInfo.fromPlatform();
         final currentVersion = packageInfo.version;
 
-        debugPrint('📱 [UpdateService] Versión actual app: $currentVersion');
+        _showDebugLog('App: $currentVersion vs Servidor: $serverVersion');
 
         if (_isVersionGreater(serverVersion, currentVersion)) {
-          debugPrint('✅ [UpdateService] Nueva versión disponible!');
+          _showDebugLog('NUEVA VERSION: $serverVersion');
           _showUpdateDialog(context, serverVersion, apkUrl);
         } else {
-          debugPrint('✅ [UpdateService] App actualizada');
+          _showDebugLog('App actualizada');
         }
       }
     } on DioException catch (e) {
-      debugPrint('❌ [UpdateService] Error de conexión: ${e.message}');
-      _showErrorSnackBar(context, 'Sin conexión al servidor de actualizaciones');
+      _showDebugLog('Error conexion: ${e.message}');
+      _showErrorSnackBar(context, ' No se pudo verificar actualizaciones');
     } catch (e) {
-      debugPrint('❌ [UpdateService] Error: $e');
+      _showDebugLog('Error: $e');
     }
+  }
+
+  void _showDebugLog(String msg) {
+    debugPrint('[UPDATE] $msg');
   }
 
   bool _isVersionGreater(String server, String local) {

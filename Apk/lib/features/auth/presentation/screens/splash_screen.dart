@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/services/update_service.dart';
 import '../../../../core/network/dio_client.dart';
@@ -15,6 +16,8 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  String _versionInfo = '';
+
   @override
   void initState() {
     super.initState();
@@ -23,18 +26,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> _init() async {
     try {
-      // Breve espera para que el sistema esté listo
       await Future.delayed(const Duration(milliseconds: 500));
       
       if (!mounted) return;
       
-      // 1. Chequeo de actualizaciones (silencioso)
+      final packageInfo = await PackageInfo.fromPlatform();
+      setState(() => _versionInfo = 'v${packageInfo.version}');
+      
       final dio = DioClient(SecureStorageService());
       await AppUpdateService(dio).checkForUpdates(context);
       
       if (!mounted) return;
 
-      // 2. Auth
       await ref.read(authProvider.notifier).checkAuthStatus();
       
       if (mounted) {
@@ -46,24 +49,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         }
       }
     } catch (e) {
-      // Si falla cualquier cosa, vamos al login para no quedar bloqueados
       if (mounted) context.go('/login');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: Icon(
-          Icons.play_circle_fill,
-          size: 100,
-          color: AppTheme.primaryRed,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.play_circle_fill, size: 100, color: AppTheme.primaryRed),
+            const SizedBox(height: 20),
+            Text(_versionInfo, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          ],
         ),
       ),
     );
   }
 }
-
-
