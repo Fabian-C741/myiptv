@@ -94,13 +94,69 @@ class _ProfilesGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final canAdd = profiles.length < 5;
+    
     return Wrap(
       spacing: 24,
       runSpacing: 24,
       alignment: WrapAlignment.center,
-      children: profiles.map((profile) {
-        return _ProfileCard(profile: profile, isEditing: isEditing);
-      }).toList(),
+      children: [
+        ...profiles.map((profile) => _ProfileCard(profile: profile, isEditing: isEditing)),
+        if (canAdd)
+          GestureDetector(
+            onTap: () => _showAddProfileDialog(context, ref),
+            child: Column(
+              children: [
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.white38, width: 2),
+                  ),
+                  child: const Icon(Icons.add, color: Colors.white38, size: 40),
+                ),
+                const SizedBox(height: 12),
+                const Text('Agregar', style: TextStyle(color: Color(0xFFE5E5E5), fontSize: 14)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showAddProfileDialog(BuildContext context, WidgetRef ref) {
+    final nameController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1E),
+        title: const Text('Nuevo Perfil', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: nameController,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Nombre del perfil',
+            hintStyle: TextStyle(color: Colors.white38),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCELAR', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryRed),
+            onPressed: () {
+              if (nameController.text.isNotEmpty) {
+                ref.read(profileProvider.notifier).addProfile(nameController.text);
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('AGREGAR'),
+          ),
+        ],
+      ),
     );
   }
 }
