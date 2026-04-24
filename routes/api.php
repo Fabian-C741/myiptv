@@ -53,8 +53,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Fuentes Externas y VOD (Stremio / MXL / M3U / URL directa)
     Route::prefix('vod')->group(function () {
-        Route::get('/stremio/catalogs', [\App\Http\Controllers\Api\AppVODController::class, 'getCatalogs']);
-        Route::get('/stremio/items',    [\App\Http\Controllers\Api\AppVODController::class, 'getCatalogItems']);
+        Route::get('/stremio/catalogs',           [\App\Http\Controllers\Api\AppVODController::class, 'getCatalogs']);
+        Route::get('/stremio/items',              [\App\Http\Controllers\Api\AppVODController::class, 'getCatalogItems']);
+        Route::get('/stremio/meta/{type}/{id}',   [\App\Http\Controllers\Api\AppVODController::class, 'getMeta']);
+        Route::get('/stremio/stream/{type}/{id}', [\App\Http\Controllers\Api\AppVODController::class, 'getStream']);
     });
 
     Route::prefix('external-sources')->group(function () {

@@ -95,4 +95,57 @@ class AppVODController extends Controller
 
         return response()->json(['metas' => []]);
     }
+
+    /**
+     * Proxy para obtener metadatos detallados de un item (Stremio SDK /meta)
+     */
+    public function getMeta(Request $request, $type, $id)
+    {
+        $baseUrl = $request->query('base_url');
+        if (!$baseUrl) {
+            return response()->json(['error' => 'URL base del addon requerida'], 400);
+        }
+
+        try {
+            // Asegurar que baseUrl termine con /
+            $baseUrl = rtrim($baseUrl, '/') . '/';
+            $url = "{$baseUrl}meta/{$type}/{$id}.json";
+            
+            $response = Http::timeout(10)->get($url);
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+        return response()->json(['meta' => null]);
+    }
+
+    /**
+     * Proxy para obtener los enlaces de stream de un item (Stremio SDK /stream)
+     */
+    public function getStream(Request $request, $type, $id)
+    {
+        $baseUrl = $request->query('base_url');
+        if (!$baseUrl) {
+            return response()->json(['error' => 'URL base del addon requerida'], 400);
+        }
+
+        try {
+            // Asegurar que baseUrl termine con /
+            $baseUrl = rtrim($baseUrl, '/') . '/';
+            // Stremio permite IDs con sub-parametros (ej: series id:season:episode)
+            $url = "{$baseUrl}stream/{$type}/{$id}.json";
+            
+            $response = Http::timeout(10)->get($url);
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+        return response()->json(['streams' => []]);
+    }
 }
