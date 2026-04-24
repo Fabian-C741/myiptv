@@ -1,10 +1,11 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\ChannelGroup;
 use App\Models\Channel;
+use App\Models\ChannelGroup;
+use Illuminate\Http\Request;
 
 class ChannelController extends Controller
 {
@@ -15,9 +16,9 @@ class ChannelController extends Controller
         $type = $request->query('type', 'live');
 
         $channels = Channel::where('type', $type)
-            ->when($isKid, function($query) {
-                return $query->where('is_adult', false);
-            })
+            ->where('is_active', true)
+            ->with(['group:id,name,is_adult'])
+            ->when($isKid, fn ($q) => $q->where('is_adult', false))
             ->paginate(50);
 
         return response()->json($channels);
@@ -30,9 +31,9 @@ class ChannelController extends Controller
         $type = $request->query('type', 'live');
 
         $groups = ChannelGroup::where('type', $type)
-            ->when($isKid, function($query) {
-                return $query->where('is_adult', false);
-            })->get();
+            ->withCount('channels')
+            ->when($isKid, fn ($q) => $q->where('is_adult', false))
+            ->get(['id', 'name', 'type', 'is_adult', 'channels_count']);
 
         return response()->json($groups);
     }
@@ -43,23 +44,19 @@ class ChannelController extends Controller
         $isKid = $profile ? $profile->is_kid : false;
 
         $channels = Channel::where('channel_group_id', $groupId)
-            ->when($isKid, function($query) {
-                return $query->where('is_adult', false);
-            })
+            ->where('is_active', true)
+            ->when($isKid, fn ($q) => $q->where('is_adult', false))
             ->paginate(50);
 
         return response()->json($channels);
     }
 
-    /**
-     * Get Series structure: Seasons -> Episodes
-     */
     public function seriesDetails($id)
     {
         $series = Channel::where('type', 'series')
-            ->with(['seasons.episodes'])
+            ->with(['seasons' => fn ($q) => $q->with('episodes')])
             ->findOrFail($id);
-            
+
         return response()->json($series);
     }
 }

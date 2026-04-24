@@ -1,18 +1,19 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Device;
+use App\Models\User;
+use App\Services\TokenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-use App\Models\Device;
-use App\Services\TokenService;
 use Stevebauman\Location\Facades\Location;
 
 class AuthController extends Controller
 {
     protected $tokenService;
-    
+
     public function __construct(TokenService $tokenService)
     {
         $this->tokenService = $tokenService;
@@ -21,16 +22,16 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-            'device_id' => 'required|string',
-            'device_name' => 'nullable|string',
-            'device_type' => 'nullable|string',
+            'email' => 'required|email|max:255',
+            'password' => 'required|string|min:1',
+            'device_id' => 'required|string|max:100',
+            'device_name' => 'nullable|string|max:100',
+            'device_type' => 'nullable|string|max:50',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', strtolower(trim($request->email)))->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Credenciales inválidas'], 401);
         }
 
@@ -41,26 +42,26 @@ class AuthController extends Controller
         // Check device limit
         $activeDevicesCount = Device::where('user_id', $user->id)->where('is_active', true)->count();
         $device = Device::firstOrNew(['user_id' => $user->id, 'device_id' => $request->device_id]);
-        
-        if (!$device->exists && $activeDevicesCount >= $user->max_devices) {
+
+        if (! $device->exists && $activeDevicesCount >= $user->max_devices) {
             return response()->json([
                 'message' => 'Límite de dispositivos alcanzado.',
-                'code' => 'DEVICE_LIMIT_REACHED'
+                'code' => 'DEVICE_LIMIT_REACHED',
             ], 403);
         }
 
         // GeoIP
         $ip = $request->ip();
         $position = Location::get($ip);
-        
+
         $device->fill([
-            'device_name' => $request->device_name ?? 'Dispositivo ' . $request->device_id,
+            'device_name' => $request->device_name ?? 'Dispositivo '.$request->device_id,
             'device_type' => $request->device_type,
             'ip_address' => $ip,
             'country' => $position ? $position->countryName : null,
             'city' => $position ? $position->cityName : null,
             'last_access' => now(),
-            'is_active' => true
+            'is_active' => true,
         ])->save();
 
         $token = $this->tokenService->createDeviceToken($user, $device);
@@ -71,16 +72,17 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role, // superadmin, suporte, user
-                'max_devices' => $user->max_devices
+                'max_devices' => $user->max_devices,
             ],
             'token' => $token,
-            'device_info' => $device
+            'device_info' => $device,
         ], 200);
     }
 
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
+
         // Optionals: update DeviceSession based on current token
         return response()->json(['message' => 'Sesión cerrada correctamente']);
     }
