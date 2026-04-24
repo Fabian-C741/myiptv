@@ -4,28 +4,27 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $kernel->handle(Illuminate\Http\Request::capture());
 
-use App\Models\Channel;
+use App\Http\Controllers\Api\AppVODController;
+use Illuminate\Http\Request;
 
 header('Content-Type: application/json');
 
 try {
-    $canales = Channel::latest()->take(5)->get(['id', 'name', 'stream_url']);
-    
-    $resultado = [];
-    foreach ($canales as $canal) {
-        $resultado[] = [
-            'nombre' => $canal->name,
-            'url_en_bd' => $canal->stream_url,
-            'longitud_url' => strlen($canal->stream_url),
-            'posiblemente_incompleta' => strlen($canal->stream_url) == 250 // El límite que le pusimos al truncar
-        ];
-    }
+    // 1. Simular la petición que haría la App (Cerebro) hacia el Backend (Cuerpo)
+    // Pidiendo los datos de Stremio (Cinemeta) para la película "El Padrino" (tt0068646)
+    $request = Request::create('/api/vod/stremio/meta/movie/tt0068646', 'GET', [
+        'base_url' => 'https://v3-cinemeta.strem.io/'
+    ]);
+
+    $controller = new AppVODController();
+    $respuesta_proxy = $controller->getMeta($request, 'movie', 'tt0068646');
 
     echo json_encode([
-        'mensaje' => 'Testeo de integridad de URLs enviadas a la App',
-        'canales_analizados' => $resultado
+        'mensaje' => '⚡ ¡ÉXITO! El Backend funciona como Proxy perfecto hacia Stremio.',
+        'explicacion' => 'La App le pidió datos al Backend, y el Backend fue a Stremio, trajo el póster y la sinopsis, y se los entregó limpios a la App.',
+        'datos_entregados_por_tu_servidor' => json_decode($respuesta_proxy->getContent(), true)
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
 } catch (\Exception $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Falló el test: ' . $e->getMessage()]);
 }
