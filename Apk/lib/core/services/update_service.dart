@@ -12,32 +12,49 @@ class AppUpdateService {
 
   AppUpdateService(this._dio);
 
-  /**
-   * Verifica si hay una nueva versión disponible en el servidor.
-   */
   Future<void> checkForUpdates(BuildContext context) async {
     try {
-      // Timeout de 3 segundos para no bloquear el inicio
+      debugPrint('🔄 [UpdateService] Verificando actualizaciones...');
+      
       final response = await _dio.instance.get('/app/config').timeout(
-        const Duration(seconds: 3),
-        onTimeout: () => throw Exception('Timeout'),
+        const Duration(seconds: 10),
+        onTimeout: () {
+          debugPrint('⏱️ [UpdateService] Timeout - servidor no responde');
+          throw Exception('Timeout');
+        },
       );
+      
+      debugPrint('📡 [UpdateService] Respuesta: ${response.statusCode}');
       
       if (response.statusCode == 200 && context.mounted) {
         final serverVersion = response.data['current_version'];
         final apkUrl = response.data['apk_url'];
 
-        if (serverVersion == null || apkUrl == null) return;
+        debugPrint('🖥️ [UpdateService] Versión servidor: $serverVersion');
+        debugPrint('🔗 [UpdateService] APK URL: $apkUrl');
+
+        if (serverVersion == null || apkUrl == null || apkUrl.isEmpty) {
+          debugPrint('⚠️ [UpdateService] Datos incompletos');
+          return;
+        }
 
         final packageInfo = await PackageInfo.fromPlatform();
         final currentVersion = packageInfo.version;
 
+        debugPrint('📱 [UpdateService] Versión actual app: $currentVersion');
+
         if (_isVersionGreater(serverVersion, currentVersion)) {
+          debugPrint('✅ [UpdateService] Nueva versión disponible!');
           _showUpdateDialog(context, serverVersion, apkUrl);
+        } else {
+          debugPrint('✅ [UpdateService] App actualizada');
         }
       }
+    } on DioException catch (e) {
+      debugPrint('❌ [UpdateService] Error de conexión: ${e.message}');
+      _showErrorSnackBar(context, 'Sin conexión al servidor de actualizaciones');
     } catch (e) {
-      debugPrint('Error en update check: $e');
+      debugPrint('❌ [UpdateService] Error: $e');
     }
   }
 
@@ -46,13 +63,24 @@ class AppUpdateService {
       List<String> sParts = server.split('.');
       List<String> lParts = local.split('.');
       int length = sParts.length > lParts.length ? sParts.length : lParts.length;
+      
+      debugPrint('📊 [UpdateService] Comparando: $server vs $local');
+      
       for (int i = 0; i < length; i++) {
-        int s = i < sParts.length ? int.parse(sParts[i].replaceAll(RegExp(r'[^0-9]'), '')) : 0;
-        int l = i < lParts.length ? int.parse(lParts[i].replaceAll(RegExp(r'[^0-9]'), '')) : 0;
-        if (s > l) return true;
-        if (s < l) return false;
+        int s = i < sParts.length ? int.tryParse(sParts[i].replaceAll(RegExp(r'[^0-9]'), '')) ?? 0 : 0;
+        int l = i < lParts.length ? int.tryParse(lParts[i].replaceAll(RegExp(r'[^0-9]'), '')) ?? 0 : 0;
+        
+        if (s > l) {
+          debugPrint('🔺 [UpdateService] Servidor mayor en posición $i: $s > $l');
+          return true;
+        }
+        if (s < l) {
+          debugPrint('🔻 [UpdateService] Local mayor en posición $i: $l > $s');
+          return false;
+        }
       }
     } catch (e) {
+      debugPrint('❌ [UpdateService] Error comparando: $e');
       return server != local;
     }
     return false;
@@ -87,7 +115,10 @@ class AppUpdateService {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: () => _launchURL(url),
+            onPressed: () {
+              Navigator.pop(context);
+              _launchURL(url);
+            },
             child: const Text('ACTUALIZAR AHORA', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
@@ -95,12 +126,25 @@ class AppUpdateService {
     );
   }
 
+  void _showErrorSnackBar(BuildContext context, String message) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   Future<void> _launchURL(String url) async {
     try {
+      debugPrint('🚀 [UpdateService] Abriendo URL: $url');
       final uri = Uri.parse(url);
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
-      // Error silencioso
+      debugPrint('❌ [UpdateService] Error al abrir URL: $e');
     }
   }
 }
