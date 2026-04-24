@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Setting;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ConfigController extends Controller
@@ -32,12 +32,20 @@ class ConfigController extends Controller
      */
     public function show()
     {
+        $whatsappRaw = Setting::get('whatsapp_contact', '+5491100000000');
+        $whatsappClean = preg_replace('/[^0-9]/', '', $whatsappRaw);
+        $whatsappUrl = 'https://wa.me/'.$whatsappClean;
+
+        $logoPath = Setting::get('app_logo');
+        $logoUrl = $logoPath ? url(Storage::url($logoPath)) : url('/logo.png');
+
         return response()->json([
             'app_name' => Setting::get('app_name'),
-            'app_logo' => Setting::get('app_logo') ? url(Storage::url(Setting::get('app_logo'))) : null,
+            'app_logo' => $logoUrl,
             'current_version' => Setting::get('app_version'),
             'apk_url' => Setting::get('app_apk_url'),
-            'whatsapp_contact' => Setting::get('whatsapp_contact', '+5491100000000'),
+            'whatsapp_contact' => $whatsappRaw,
+            'whatsapp_url' => $whatsappUrl,
             'default_max_devices' => config('ott.default_max_devices'),
         ]);
     }
@@ -54,7 +62,7 @@ class ConfigController extends Controller
             'primary_color' => 'sometimes|string',
             'secondary_color' => 'sometimes|string',
             'whatsapp_contact' => 'sometimes|string',
-            'logo_file' => 'sometimes|image|mimes:png,jpg,jpeg|max:2048'
+            'logo_file' => 'sometimes|image|mimes:png,jpg,jpeg|max:2048',
         ]);
 
         foreach ($request->except(['_token', 'logo_file']) as $key => $value) {
@@ -76,21 +84,21 @@ class ConfigController extends Controller
                 // 1. Guardar el archivo APK
                 $apkName = 'Electrofabiptv.apk';
                 $request->file('apk_file')->storeAs('public/updates', $apkName);
-                
+
                 // 2. Generar la URL automática
-                $apkUrl = url(Storage::url('updates/' . $apkName));
+                $apkUrl = url(Storage::url('updates/'.$apkName));
                 Setting::set('app_apk_url', $apkUrl);
 
                 // 3. Auto-incrementar la versión
                 $currentVersion = Setting::get('app_version', '1.0.0');
                 $parts = explode('.', $currentVersion);
                 if (count($parts) == 3) {
-                    $parts[2] = (int)$parts[2] + 1; // Incrementamos el último número
+                    $parts[2] = (int) $parts[2] + 1; // Incrementamos el último número
                     $newVersion = implode('.', $parts);
                     Setting::set('app_version', $newVersion);
                 }
             } catch (\Exception $e) {
-                return back()->withErrors(['apk_file' => 'Error al guardar el APK: ' . $e->getMessage()]);
+                return back()->withErrors(['apk_file' => 'Error al guardar el APK: '.$e->getMessage()]);
             }
         }
 
