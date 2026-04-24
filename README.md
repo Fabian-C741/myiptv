@@ -173,6 +173,24 @@ SECURITY_LOG=true
 
 ---
 
+## 📋 Changelog
+
+### v1.0.1 (2026-04-23) - Fixes y mejoras
+
+#### Bug fixes:
+- **Channel.php**: Agregado `is_active` a `$fillable` - corregía error al crear canales desde XtreamService
+
+#### Mejoras:
+- **AuthController**: Sanitización de email (`strtolower(trim)`) + validación con límites
+- **ChannelController**: Filtro `is_active = true` por defecto + eager loading (`with`) + `withCount`
+- **AppVODController**: Validación explícita de parámetros url/type/id
+
+#### Tests:
+- `tests/Unit/ModelTest.php` - Tests de modelos (5 pruebas)
+- `tests/Feature/AuthTest.php` - Tests de autenticación (4 pruebas)
+
+---
+
 ## 📄 Licencia
 
 Proyecto privado. Todos los derechos reservados.
