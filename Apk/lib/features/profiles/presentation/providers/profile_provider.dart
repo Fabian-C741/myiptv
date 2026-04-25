@@ -104,6 +104,17 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     }
   }
 
+  Future<void> addProfile(String name) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final newProfile = await _dataSource.createProfile(name);
+      final profiles = [...state.profiles, newProfile];
+      state = state.copyWith(isLoading: false, profiles: profiles);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
   Future<String?> uploadAvatar(int profileId, dynamic imageFile) async {
     try {
       final url = await _dataSource.uploadAvatar(profileId, imageFile);
