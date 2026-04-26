@@ -53,13 +53,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: Icon(
-          Icons.play_circle_fill,
-          size: 100,
-          color: AppTheme.primaryRed,
+        child: Image.asset(
+          'assets/icons/logo.png',
+          height: 150,
         ),
       ),
     );

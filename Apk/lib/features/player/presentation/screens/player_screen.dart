@@ -15,7 +15,7 @@ class PlayerScreen extends ConsumerStatefulWidget {
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-class _PlayerScreenState extends ConsumerState<PlayerScreen> {
+class _PlayerScreenState extends ConsumerState<PlayerScreen> with WidgetsBindingObserver {
   late final VideoController _videoController;
   bool _showControls = true;
   bool _isLocked = false;
@@ -27,6 +27,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Ocultar barras del sistema
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations([
@@ -57,6 +58,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     final player = ref.read(playerProvider('global')).player;
     player.stop(); // Detener el video inmediatamente
     
@@ -65,6 +67,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         DeviceOrientation.portraitUp,
     ]);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      final player = ref.read(playerProvider('global')).player;
+      player.pause();
+    }
   }
 
   void _showAudioPicker(BuildContext context, PlayerState playerState) {
@@ -169,7 +179,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         child: Stack(
           children: [
             // Video
-            Center(child: Video(controller: _videoController, fill: Colors.black)),
+            Center(child: Video(controller: _videoController, controls: NoVideoControls, fill: Colors.black)),
 
             // Overlay de Brillo/Volumen (indicadores visuales)
             if (_showControls && !_isLocked) ...[

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Admin\IPTVAdminController;
 use App\Http\Controllers\Admin\ConfigController;
 use App\Http\Controllers\Admin\SecurityController;
+use App\Http\Controllers\Admin\ChannelAdminController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -47,6 +48,12 @@ Route::prefix('admin')->group(function () {
         Route::patch('/content/{id}', [IPTVAdminController::class, 'update'])->name('admin.content.update');
         Route::delete('/content/{id}', [IPTVAdminController::class, 'destroy'])->name('admin.content.destroy');
         Route::post('/content/sync/{id}', [IPTVAdminController::class, 'sync'])->name('admin.content.sync');
+
+        // Gestión Individual de Canales / Películas
+        Route::get('/channels', [ChannelAdminController::class, 'index'])->name('admin.channels.index');
+        Route::get('/channels/create', [ChannelAdminController::class, 'create'])->name('admin.channels.create');
+        Route::post('/channels', [ChannelAdminController::class, 'store'])->name('admin.channels.store');
+        Route::post('/channels/{id}/toggle', [ChannelAdminController::class, 'toggleStatus'])->name('admin.channels.toggle');
 
         // Configuración de Marca y App
         Route::get('/config', [ConfigController::class, 'index'])->name('admin.config');

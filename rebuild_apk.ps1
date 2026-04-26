@@ -14,6 +14,9 @@ if (Test-Path "android/app/build") { Remove-Item -Recurse -Force android/app/bui
 Write-Host "[2/4] Sincronizando dependencias..." -ForegroundColor Yellow
 flutter pub get
 
+Write-Host "[2.5/4] Generando Iconos de la Aplicación..." -ForegroundColor Yellow
+flutter pub run flutter_launcher_icons
+
 # 3. Compilación de Producción
 Write-Host "[3/4] Compilando APK de Producción (Release)..." -ForegroundColor Yellow
 Write-Host "(Nota: El procesamiento paralelo está desactivado para estabilidad extrema)"

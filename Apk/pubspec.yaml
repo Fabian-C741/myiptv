@@ -22,6 +22,7 @@ dependencies:
   dio: ^5.4.0
   flutter_secure_storage: ^9.0.0
   json_annotation: ^4.8.1
+  youtube_explode_dart: ^2.2.2
 
   # UI y Multimedia
   media_kit: ^1.1.10

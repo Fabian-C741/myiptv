@@ -48,61 +48,122 @@ class HomeScreen extends ConsumerWidget {
     final filter = ref.watch(homeFilterProvider);
     final category = ref.watch(homeCategoryProvider);
 
+    List<ChannelModel> displayedChannels = [];
+    String gridTitle = '';
+
+    if (category != null) {
+      gridTitle = category;
+      displayedChannels = (homeState.recentChannels + homeState.movies + homeState.series)
+          .where((c) => c.groupId.toString() == category)
+          .toList();
+    } else if (filter == 'live') {
+      gridTitle = 'TV en Vivo';
+      displayedChannels = homeState.recentChannels;
+    } else if (filter == 'movie') {
+      gridTitle = 'Películas';
+      displayedChannels = homeState.movies;
+    } else if (filter == 'series') {
+      gridTitle = 'Series';
+      displayedChannels = homeState.series;
+    }
+
     return RefreshIndicator(
       onRefresh: () => ref.read(homeProvider.notifier).initHome(),
       color: AppTheme.primaryRed,
       backgroundColor: Colors.black,
-      child: SingleChildScrollView(
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (homeState.featuredChannels.isEmpty && 
-                homeState.recentChannels.isEmpty && 
-                homeState.movies.isEmpty && 
-                homeState.series.isEmpty)
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.7,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.cloud_off, color: Colors.white24, size: 80),
-                      const SizedBox(height: 16),
-                      const Text('Aún no hay contenido disponible', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      const Text('Sincroniza tus fuentes en el panel admin.', style: TextStyle(color: Colors.white54)),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () => ref.read(homeProvider.notifier).initHome(),
-                        child: const Text('Reintentar'),
-                      )
-                    ],
-                  ),
+        slivers: [
+          if (homeState.featuredChannels.isEmpty && 
+              homeState.recentChannels.isEmpty && 
+              homeState.movies.isEmpty && 
+              homeState.series.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.cloud_off, color: Colors.white24, size: 80),
+                    const SizedBox(height: 16),
+                    const Text('Aún no hay contenido disponible', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    const Text('Sincroniza tus fuentes en el panel admin.', style: TextStyle(color: Colors.white54)),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => ref.read(homeProvider.notifier).initHome(),
+                      child: const Text('Reintentar'),
+                    )
+                  ],
                 ),
               ),
-            
-            if (homeState.featuredChannels.isNotEmpty && filter == 'all' && category == null)
-              _HeroBanner(channels: homeState.featuredChannels),
-            const SizedBox(height: 8),
-            if ((filter == 'all' || filter == 'live') && category == null)
-              _Section(title: 'TV en Vivo', channels: homeState.recentChannels),
-            if ((filter == 'all' || filter == 'movie') && category == null)
-              _Section(title: 'Películas', channels: homeState.movies),
-            if ((filter == 'all' || filter == 'series') && category == null)
-              _Section(title: 'Series', channels: homeState.series),
-            if (category != null)
-              _Section(
-                title: category,
-                channels: (homeState.recentChannels + homeState.movies + homeState.series)
-                    .where((c) => c.groupId.toString() == category)
-                    .toList(),
+            ),
+          
+          if (homeState.featuredChannels.isNotEmpty && filter == 'all' && category == null)
+            SliverToBoxAdapter(
+              child: _HeroBanner(channels: homeState.featuredChannels),
+            ),
+
+          if (filter == 'all' && category == null) ...[
+            const SliverToBoxAdapter(child: SizedBox(height: 10)),
+            ..._buildSliverGridSection(context, ref, 'TV en Vivo', homeState.recentChannels, limit: 18, showSeeAll: true, onSeeAll: () => ref.read(homeFilterProvider.notifier).state = 'live'),
+            ..._buildSliverGridSection(context, ref, 'Películas', homeState.movies, limit: 18, showSeeAll: true, onSeeAll: () => ref.read(homeFilterProvider.notifier).state = 'movie'),
+            ..._buildSliverGridSection(context, ref, 'Series', homeState.series, limit: 18, showSeeAll: true, onSeeAll: () => ref.read(homeFilterProvider.notifier).state = 'series'),
+          ] else ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 100), // Espacio para el AppBar transparente
               ),
-            const SizedBox(height: 100),
+            ),
+            ..._buildSliverGridSection(context, ref, gridTitle, displayedChannels, limit: null, showSeeAll: false, onSeeAll: null),
           ],
-        ),
+          
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+        ],
       ),
     );
+  }
+
+  List<Widget> _buildSliverGridSection(BuildContext context, WidgetRef ref, String title, List<ChannelModel> channels, {int? limit, required bool showSeeAll, VoidCallback? onSeeAll}) {
+    if (channels.isEmpty) return [];
+    
+    final displayList = limit != null && channels.length > limit ? channels.take(limit).toList() : channels;
+
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              if (showSeeAll && channels.length > (limit ?? 0))
+                GestureDetector(
+                  onTap: onSeeAll,
+                  child: const Text('Ver todos', style: TextStyle(color: AppTheme.primaryRed, fontSize: 14, fontWeight: FontWeight.w600)),
+                ),
+            ],
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 1.4,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final ch = displayList[index];
+              return _GridItem(channel: ch);
+            },
+            childCount: displayList.length,
+          ),
+        ),
+      ),
+    ];
   }
 }
 
@@ -438,62 +499,45 @@ class _HeroBanner extends StatelessWidget {
   }
 }
 
-// ── Sección horizontal de canales ─────────────────────────────────────────────
-class _Section extends StatelessWidget {
-  final String title;
-  final List<ChannelModel> channels;
-  const _Section({required this.title, required this.channels});
+// ── Elemento Individual de Cuadrícula ─────────────────────────────────────────
+class _GridItem extends StatelessWidget {
+  final ChannelModel channel;
+  const _GridItem({required this.channel});
 
   @override
   Widget build(BuildContext context) {
-    if (channels.isEmpty) return const SizedBox();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-          child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-        ),
-        SizedBox(
-          height: 150,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: channels.length,
-            itemBuilder: (_, i) {
-              final ch = channels[i];
-              return GestureDetector(
-                onTap: () => context.push('/player', extra: ch),
-                child: Container(
-                  width: 220,
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: DecorationImage(
-                      image: NetworkImage(ch.logo ?? 'https://via.placeholder.com/220x124'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  alignment: Alignment.bottomLeft,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(8), bottomRight: Radius.circular(8)),
-                      gradient: const LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [Colors.black87, Colors.transparent],
-                      ),
-                    ),
-                    child: Text(ch.displayName, maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              );
-            },
+    return GestureDetector(
+      onTap: () => context.push('/player', extra: channel),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            image: DecorationImage(
+              image: NetworkImage(channel.logo ?? 'https://via.placeholder.com/220x124'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          alignment: Alignment.bottomLeft,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Colors.black87, Colors.black45, Colors.transparent],
+              ),
+            ),
+            child: Text(
+              channel.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 }

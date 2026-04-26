@@ -33,6 +33,9 @@ Write-Host "=== [4/6] Flutter pub get ===" -ForegroundColor Cyan
 Set-Location $APK_DIR
 & $FLUTTER pub get
 
+Write-Host "=== [4.5/6] Generando Iconos de la App ===" -ForegroundColor Cyan
+& $FLUTTER pub run flutter_launcher_icons
+
 Write-Host "=== [5/6] Building APK Release ===" -ForegroundColor Cyan
 $env:GRADLE_OPTS = "-Xmx4096m -Dorg.gradle.daemon=false"
 & $FLUTTER build apk --release --split-per-abi 2>&1 | Tee-Object "D:\Apk-tv\build_output.log"

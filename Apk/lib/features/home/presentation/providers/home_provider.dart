@@ -104,7 +104,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
       state = state.copyWith(
         isLoading: false,
         featuredChannels: channels.where((c) => c.logo != null).take(10).toList(), // Priorizar tus canales con logo
-        recentChannels: channels.take(20).toList(),
+        recentChannels: channels, // Sin límite para mostrar los 12500 canales
         movies: stremioMovies,
         series: stremioSeries,
         categories: categories,

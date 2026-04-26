@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:ott_app/shared/models/channel_model.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class PlayerState {
   final Player player;
@@ -109,8 +110,26 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
         state = state.copyWith(error: 'URL de stream no disponible.');
         return;
       }
+      String finalUrl = url.trim();
+
+      // Detección y extracción de YouTube
+      if (finalUrl.contains('youtube.com/') || finalUrl.contains('youtu.be/')) {
+        try {
+          final yt = YoutubeExplode();
+          final videoId = VideoId.parseVideoId(finalUrl);
+          if (videoId != null) {
+            final manifest = await yt.videos.streamsClient.getManifest(videoId);
+            final streamInfo = manifest.muxed.withHighestBitrate();
+            finalUrl = streamInfo.url.toString();
+          }
+          yt.close();
+        } catch (e) {
+          print('YouTube extraction failed: $e');
+        }
+      }
+
       // Headers de navegador estándar para evitar bloqueos de CDNs anti-VLC
-      final media = Media(url.trim(), httpHeaders: {
+      final media = Media(finalUrl, httpHeaders: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
       });
       await state.player.open(media);

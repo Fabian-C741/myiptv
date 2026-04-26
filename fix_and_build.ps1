@@ -42,6 +42,9 @@ if ($Clean -or !(Test-Path ".dart_tool")) {
     flutter pub get
 }
 
+Write-Host "  > Generando icono de la app..." -ForegroundColor Gray
+flutter pub run flutter_launcher_icons
+
 Write-Host "  > Compilando APK Release (Construccion Incremental)..." -ForegroundColor Gray
 # Usamos flags para estabilidad y evitar errores de fuentes
 flutter build apk --release --no-tree-shake-icons
