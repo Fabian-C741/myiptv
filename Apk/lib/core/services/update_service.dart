@@ -45,7 +45,7 @@ class AppUpdateService {
 
         if (_isVersionGreater(serverVersion, currentVersion)) {
           debugPrint('✅ [UpdateService] Nueva versión disponible!');
-          _showUpdateDialog(context, serverVersion, apkUrl);
+          await _showUpdateDialog(context, serverVersion, apkUrl);
         } else {
           debugPrint('✅ [UpdateService] App actualizada');
         }
@@ -86,8 +86,8 @@ class AppUpdateService {
     return false;
   }
 
-  void _showUpdateDialog(BuildContext context, String version, String url) {
-    showDialog(
+  Future<void> _showUpdateDialog(BuildContext context, String version, String url) async {
+    await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
