@@ -108,7 +108,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final newProfile = await _dataSource.createProfile(name);
-      final profiles = [...state.profiles, newProfile];
+      final profiles = <ProfileModel>[...state.profiles, newProfile];
       state = state.copyWith(isLoading: false, profiles: profiles);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

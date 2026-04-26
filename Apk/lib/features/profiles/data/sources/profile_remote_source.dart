@@ -48,6 +48,18 @@ class ProfileRemoteDataSource {
     }
   }
 
+  Future<ProfileModel> createProfile(String name) async {
+    try {
+      final response = await _dioClient.instance.post(
+        AppConfig.profiles,
+        data: {'name': name},
+      );
+      return ProfileModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<String> uploadAvatar(int profileId, File imageFile) async {
     try {
       final formData = FormData.fromMap({
