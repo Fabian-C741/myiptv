@@ -49,10 +49,7 @@ class PlayerState {
 class PlayerNotifier extends StateNotifier<PlayerState> {
   static const int _maxRetries = 3;
 
-  PlayerNotifier() : super(PlayerState(player: Player(configuration: const PlayerConfiguration(
-    bufferSize: 64 * 1024 * 1024, // Aumentado a 64 MB para mayor estabilidad
-    protocolWhitelist: ['http', 'https', 'tcp', 'tls', 'crypto', 'data', 'file', 'rtp', 'udp'],
-  )))) {
+  PlayerNotifier() : super(PlayerState(player: Player())) {
     _initListeners();
   }
 
@@ -126,10 +123,19 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
         }
       }
 
-      // Headers de navegador estándar para evitar bloqueos de CDNs anti-VLC
-      final media = Media(finalUrl, httpHeaders: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-      });
+      // Si ya hay algo reproduciendo, lo detenemos completamente
+      await state.player.stop();
+
+      // Determinamos si necesitamos headers especiales (para evitar bloqueos de CDNs)
+      // Pero NO los usamos para YouTube, ya que pueden causar errores 403 Forbidden
+      Map<String, String>? headers;
+      if (!url.contains('youtube.com') && !url.contains('youtu.be')) {
+        headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+        };
+      }
+
+      final media = Media(finalUrl, httpHeaders: headers);
       await state.player.open(media);
       await state.player.play();
     } catch (e) {
@@ -167,6 +173,6 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   }
 }
 
-final playerProvider = StateNotifierProvider.family<PlayerNotifier, PlayerState, String>((ref, id) {
+final playerProvider = StateNotifierProvider.autoDispose.family<PlayerNotifier, PlayerState, String>((ref, id) {
   return PlayerNotifier();
 });

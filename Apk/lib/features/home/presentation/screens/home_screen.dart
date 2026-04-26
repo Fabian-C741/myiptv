@@ -30,6 +30,10 @@ class HomeScreen extends ConsumerWidget {
         currentIndex: navIndex,
         onTap: (i) {
           ref.read(homeNavIndexProvider.notifier).state = i;
+          if (i == 0) {
+            ref.read(homeFilterProvider.notifier).state = 'all';
+            ref.read(homeCategoryProvider.notifier).state = null;
+          }
           if (i == 1) context.push('/live-tv');
           if (i == 3) context.push('/profiles');
         },

@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/theme/app_theme.dart';
-
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/storage/secure_storage_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -40,11 +41,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _contactSupport() async {
-    // Aquí pondremos tu número de WhatsApp. 
-    // Puedes cambiarlo luego desde el backend
-    final whatsappUrl = Uri.parse("https://wa.me/5491100000000?text=Hola,%20necesito%20ayuda%20con%20ElectroFabi%20IPTV");
-    if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+    try {
+      final dio = DioClient(SecureStorageService()).instance;
+      final response = await dio.get('/app/config');
+      final waNumber = response.data['whatsapp_contact'] ?? '5491100000000';
+      final cleanNumber = waNumber.toString().replaceAll(RegExp(r'[^0-9]'), '');
+      final whatsappUrl = Uri.parse("https://wa.me/$cleanNumber?text=Hola,%20necesito%20ayuda%20con%20ElectroFabi%20IPTV");
+      if (await canLaunchUrl(whatsappUrl)) {
+        await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      final fallbackUrl = Uri.parse("https://wa.me/5491100000000?text=Hola,%20necesito%20ayuda");
+      if (await canLaunchUrl(fallbackUrl)) {
+        await launchUrl(fallbackUrl, mode: LaunchMode.externalApplication);
+      }
     }
   }
 

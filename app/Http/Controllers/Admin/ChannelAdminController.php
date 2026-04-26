@@ -5,9 +5,20 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Channel;
+use Illuminate\Support\Facades\Schema;
 
 class ChannelAdminController extends Controller
 {
+    public function __construct()
+    {
+        // Parche automático: Si la columna is_active no existe (error viejo), la crea silenciosamente
+        if (!Schema::hasColumn('channels', 'is_active')) {
+            Schema::table('channels', function ($table) {
+                $table->boolean('is_active')->default(true)->after('description');
+            });
+        }
+    }
+
     /**
      * List all channels with pagination and filtering.
      */
@@ -54,11 +65,21 @@ class ChannelAdminController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        $logo = $request->logo;
+
+        // Detección automática de miniatura de YouTube si no se proporcionó una imagen
+        if (empty($logo) && (str_contains($request->stream_url, 'youtube.com/') || str_contains($request->stream_url, 'youtu.be/'))) {
+            preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/\s]{11})%i', $request->stream_url, $match);
+            if (isset($match[1])) {
+                $logo = 'https://img.youtube.com/vi/' . $match[1] . '/hqdefault.jpg';
+            }
+        }
+
         Channel::create([
             'name' => $request->name,
             'type' => $request->type,
             'stream_url' => $request->stream_url,
-            'logo' => $request->logo,
+            'logo' => $logo,
             'description' => $request->description,
             'is_active' => true,
         ]);
