@@ -23,8 +23,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> _init() async {
     try {
-      // Breve espera para que el sistema esté listo
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Esperamos un poco más para que la red esté 100% activa
+      await Future.delayed(const Duration(seconds: 2));
       
       if (!mounted) return;
       

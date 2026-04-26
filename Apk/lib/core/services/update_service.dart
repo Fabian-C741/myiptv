@@ -27,8 +27,9 @@ class AppUpdateService {
       debugPrint('📡 [UpdateService] Respuesta: ${response.statusCode}');
       
       if (response.statusCode == 200 && context.mounted) {
-        final serverVersion = response.data['current_version'];
-        final apkUrl = response.data['apk_url'];
+        // Forzamos conversión a String por si el JSON viene con formatos inesperados
+        final serverVersion = response.data['current_version']?.toString();
+        final apkUrl = response.data['apk_url']?.toString();
 
         debugPrint('🖥️ [UpdateService] Versión servidor: $serverVersion');
         debugPrint('🔗 [UpdateService] APK URL: $apkUrl');
@@ -60,8 +61,12 @@ class AppUpdateService {
 
   bool _isVersionGreater(String server, String local) {
     try {
-      List<String> sParts = server.split('.');
-      List<String> lParts = local.split('.');
+      // Limpiamos versiones de cualquier cosa que no sea números o puntos (ej: 1.0.3+4 -> 1.0.3)
+      final cleanServer = server.split('+')[0].split('-')[0];
+      final cleanLocal = local.split('+')[0].split('-')[0];
+      
+      List<String> sParts = cleanServer.split('.');
+      List<String> lParts = cleanLocal.split('.');
       int length = sParts.length > lParts.length ? sParts.length : lParts.length;
       
       debugPrint('📊 [UpdateService] Comparando: $server vs $local');
