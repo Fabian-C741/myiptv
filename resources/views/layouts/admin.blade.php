@@ -259,7 +259,11 @@
                 </a>
                 <a href="{{ route('admin.content') }}" class="nav-item {{ request()->routeIs('admin.content*') ? 'active' : '' }}">
                     <i data-lucide="tv-2"></i>
-                    <span>Contenido (IPTV)</span>
+                    <span>Fuentes (IPTV)</span>
+                </a>
+                <a href="{{ route('admin.channels.index') }}" class="nav-item {{ request()->routeIs('admin.channels*') ? 'active' : '' }}">
+                    <i data-lucide="list-video"></i>
+                    <span>Gestor de Canales (YouTube)</span>
                 </a>
                 <a href="{{ route('admin.security') }}" class="nav-item {{ request()->routeIs('admin.security*') ? 'active' : '' }}">
                     <i data-lucide="shield-check"></i>

@@ -116,12 +116,10 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       if (finalUrl.contains('youtube.com/') || finalUrl.contains('youtu.be/')) {
         try {
           final yt = YoutubeExplode();
-          final videoId = VideoId.parseVideoId(finalUrl);
-          if (videoId != null) {
-            final manifest = await yt.videos.streamsClient.getManifest(videoId);
-            final streamInfo = manifest.muxed.withHighestBitrate();
-            finalUrl = streamInfo.url.toString();
-          }
+          // youtube_explode_dart 2.2.2 usa streams en lugar de streamsClient y acepta URLs directamente
+          final manifest = await yt.videos.streams.getManifest(finalUrl);
+          final streamInfo = manifest.muxed.withHighestBitrate();
+          finalUrl = streamInfo.url.toString();
           yt.close();
         } catch (e) {
           print('YouTube extraction failed: $e');
