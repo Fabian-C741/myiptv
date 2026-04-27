@@ -36,7 +36,10 @@ class AuthController extends Controller
         }
 
         if ($user->status === 'suspended') {
-            return response()->json(['message' => 'Cuenta suspendida'], 403);
+            return response()->json([
+                'message' => 'Cuenta suspendida por falta de pago. Contacta a soporte para reactivar tu servicio.',
+                'code' => 'ACCOUNT_SUSPENDED'
+            ], 403);
         }
 
         // Check device limit
