@@ -51,7 +51,9 @@
                     <div class="form-group" style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px dashed var(--border);">
                         <label class="form-label" style="color: #00aaff;">🚀 Subir Nuevo APK (Automático)</label>
                         <input type="file" name="apk_file" class="form-input" accept=".apk">
-                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">Si subes un archivo aquí, el sistema actualizará la URL y subirá la versión automáticamente.</p>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">
+                            ✅ Al subir el APK, el sistema detecta la versión automáticamente del archivo compilado y actualiza la URL. No hace falta tocar nada más.
+                        </p>
                     </div>
                 </div>
 
