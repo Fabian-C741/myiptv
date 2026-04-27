@@ -41,10 +41,9 @@ Route::get('/fix-storage', function(Request $request) {
         $url = url('/storage/updates/Electrofabiptv.apk');
         \App\Models\Setting::set('app_apk_url', $url);
         
-        // Si pasas ?version=1.0.3 en la URL, se actualiza la versión en la DB
-        if ($request->has('version')) {
-            \App\Models\Setting::set('app_version', $request->query('version'));
-        }
+        // Forzamos la versión en la DB a 1.0.4 a menos que se envíe otra
+        $version = $request->query('version', '1.0.4');
+        \App\Models\Setting::set('app_version', $version);
 
         return response()->json([
             'status' => 'success',

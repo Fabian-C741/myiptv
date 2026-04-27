@@ -60,9 +60,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with WidgetsBinding
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     
-    // Restaurar barras del sistema y orientación ANTES de cualquier otra cosa
+    // Restaurar barras del sistema y orientación
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     
     // Detener y liberar el reproductor
     try {
@@ -159,111 +159,123 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with WidgetsBinding
     final playerState = ref.watch(playerProvider('global'));
     final player = playerState.player;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-            if (_isLocked) {
-                setState(() => _showControls = !_showControls);
-            } else {
-                _resetTimer();
-            }
-        },
-        onVerticalDragUpdate: _isLocked ? null : (details) {
-            final double delta = details.primaryDelta! / MediaQuery.of(context).size.height;
-            if (details.globalPosition.dx < MediaQuery.of(context).size.width / 2) {
-                // Brillo (Lado izquierdo)
-                setState(() => _brightness = (_brightness - delta).clamp(0.0, 1.0));
-            } else {
-                // Volumen (Lado derecho)
-                setState(() {
-                    _volume = (_volume - delta).clamp(0.0, 1.0);
-                    player.setVolume(_volume * 100);
-                });
-            }
-            _resetTimer();
-        },
-        child: Stack(
-          children: [
-            // Video
-            Center(child: Video(controller: _videoController, controls: NoVideoControls, fill: Colors.black)),
-
-            // Overlay de Brillo/Volumen (indicadores visuales)
-            if (_showControls && !_isLocked) ...[
-                _SideIndicator(icon: Icons.brightness_6, value: _brightness, isLeft: true),
-                _SideIndicator(icon: Icons.volume_up, value: _volume, isLeft: false),
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) async {
+        if (didPop) {
+           // Aseguramos que se detenga al salir por gesto o botón atrás
+           await ref.read(playerProvider('global').notifier).stop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+              if (_isLocked) {
+                  setState(() => _showControls = !_showControls);
+              } else {
+                  _resetTimer();
+              }
+          },
+          onVerticalDragUpdate: _isLocked ? null : (details) {
+              final double delta = details.primaryDelta! / MediaQuery.of(context).size.height;
+              if (details.globalPosition.dx < MediaQuery.of(context).size.width / 2) {
+                  // Brillo (Lado izquierdo)
+                  setState(() => _brightness = (_brightness - delta).clamp(0.0, 1.0));
+              } else {
+                  // Volumen (Lado derecho)
+                  setState(() {
+                      _volume = (_volume - delta).clamp(0.0, 1.0);
+                      player.setVolume(_volume * 100);
+                  });
+              }
+              _resetTimer();
+          },
+          child: Stack(
+            children: [
+              // Video
+              Center(child: Video(controller: _videoController, controls: NoVideoControls, fill: Colors.black)),
+  
+              // Overlay de Brillo/Volumen (indicadores visuales)
+              if (_showControls && !_isLocked) ...[
+                  _SideIndicator(icon: Icons.brightness_6, value: _brightness, isLeft: true),
+                  _SideIndicator(icon: Icons.volume_up, value: _volume, isLeft: false),
+              ],
+  
+              // Buffering / Loading
+              if (playerState.isBuffering)
+                  const Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+  
+              // Error Overlay
+              if (playerState.error != null)
+                  Center(
+                      child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                              const Icon(Icons.error_outline, color: Colors.red, size: 60),
+                              const SizedBox(height: 16),
+                              const Text('Error de Sintonización', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 8),
+                              Text(playerState.error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+                              const SizedBox(height: 24),
+                              ElevatedButton(
+                                  onPressed: () => ref.read(playerProvider('global').notifier).playChannel(widget.channel),
+                                  child: const Text('Reintentar'),
+                              )
+                          ],
+                      ),
+                  ),
+  
+              // Controles Netflix Style
+              if (_showControls) ...[
+                  // Top Bar
+                  Positioned(
+                      top: 0, left: 0, right: 0,
+                      child: _TopBar(
+                          title: widget.channel.displayName,
+                          isLocked: _isLocked,
+                          onBack: () async {
+                              await ref.read(playerProvider('global').notifier).stop();
+                              if (context.mounted) Navigator.pop(context);
+                          },
+                          onLock: () => setState(() => _isLocked = !_isLocked),
+                      ),
+                  ),
+  
+                  // Center Controls
+                  if (!_isLocked)
+                      Center(
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                  _ControlButton(icon: Icons.replay_10, size: 48, onTap: () => player.seek(player.state.position - const Duration(seconds: 10))),
+                                  IconButton(
+                                      icon: Icon(playerState.isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 80),
+                                      onPressed: () => ref.read(playerProvider('global').notifier).togglePlay(),
+                                  ),
+                                  _ControlButton(icon: Icons.forward_10, size: 48, onTap: () => player.seek(player.state.position + const Duration(seconds: 10))),
+                              ],
+                          ),
+                      ),
+  
+                  // Bottom Bar
+                  if (!_isLocked)
+                      Positioned(
+                          bottom: 0, left: 0, right: 0,
+                          child: _BottomBar(
+                              position: player.state.position,
+                              duration: player.state.duration,
+                              speed: _playbackSpeed,
+                              isLive: widget.channel.type == 'live',
+                              onSeek: (d) => player.seek(d),
+                              onAudio: () => _showAudioPicker(context, playerState),
+                              onSpeed: () => _showSpeedPicker(context, player),
+                          ),
+                      ),
+              ],
             ],
-
-            // Buffering / Loading
-            if (playerState.isBuffering)
-                const Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
-
-            // Error Overlay
-            if (playerState.error != null)
-                Center(
-                    child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                            const Icon(Icons.error_outline, color: Colors.red, size: 60),
-                            const SizedBox(height: 16),
-                            const Text('Error de Sintonización', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            Text(playerState.error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
-                            const SizedBox(height: 24),
-                            ElevatedButton(
-                                onPressed: () => ref.read(playerProvider('global').notifier).playChannel(widget.channel),
-                                child: const Text('Reintentar'),
-                            )
-                        ],
-                    ),
-                ),
-
-            // Controles Netflix Style
-            if (_showControls) ...[
-                // Top Bar
-                Positioned(
-                    top: 0, left: 0, right: 0,
-                    child: _TopBar(
-                        title: widget.channel.displayName,
-                        isLocked: _isLocked,
-                        onBack: () => Navigator.pop(context),
-                        onLock: () => setState(() => _isLocked = !_isLocked),
-                    ),
-                ),
-
-                // Center Controls
-                if (!_isLocked)
-                    Center(
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                                _ControlButton(icon: Icons.replay_10, size: 48, onTap: () => player.seek(player.state.position - const Duration(seconds: 10))),
-                                IconButton(
-                                    icon: Icon(playerState.isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 80),
-                                    onPressed: () => ref.read(playerProvider('global').notifier).togglePlay(),
-                                ),
-                                _ControlButton(icon: Icons.forward_10, size: 48, onTap: () => player.seek(player.state.position + const Duration(seconds: 10))),
-                            ],
-                        ),
-                    ),
-
-                // Bottom Bar
-                if (!_isLocked)
-                    Positioned(
-                        bottom: 0, left: 0, right: 0,
-                        child: _BottomBar(
-                            position: player.state.position,
-                            duration: player.state.duration,
-                            speed: _playbackSpeed,
-                            isLive: widget.channel.type == 'live',
-                            onSeek: (d) => player.seek(d),
-                            onAudio: () => _showAudioPicker(context, playerState),
-                            onSpeed: () => _showSpeedPicker(context, player),
-                        ),
-                    ),
-            ],
-          ],
+          ),
         ),
       ),
     );

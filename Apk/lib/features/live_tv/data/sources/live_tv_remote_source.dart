@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/app_config.dart';
 import 'package:ott_app/shared/models/channel_model.dart';
@@ -15,12 +16,22 @@ class LiveTvRemoteDataSource {
         url,
         queryParameters: {'type': type},
       );
-      
-      // Handle Laravel pagination if needed, or direct list
-      final List data = (response.data is Map) ? response.data['data'] : response.data;
-      return data.map((json) => ChannelModel.fromJson(json)).toList();
-    } on DioException catch (_) {
-      throw 'Error al cargar contenido';
+
+      // El servidor puede responder con una lista directa O con paginación Laravel {data: [...]}
+      List rawList;
+      if (response.data is Map) {
+        rawList = response.data['data'] ?? [];
+      } else if (response.data is List) {
+        rawList = response.data;
+      } else {
+        rawList = [];
+      }
+
+      return rawList.map((json) => ChannelModel.fromJson(json as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw 'Error al cargar contenido: ${e.message}';
+    } catch (e) {
+      throw 'Error inesperado: $e';
     }
   }
 
@@ -30,10 +41,13 @@ class LiveTvRemoteDataSource {
         AppConfig.groups,
         queryParameters: {'type': type},
       );
-      final List data = response.data;
-      return data.map((json) => CategoryModel.fromJson(json)).toList();
-    } on DioException catch (_) {
-      throw 'Error al cargar categorías';
+      // Misma lógica: puede venir como lista o como mapa paginado
+      final List data = (response.data is Map)
+          ? (response.data['data'] ?? [])
+          : (response.data is List ? response.data : []);
+      return data.map((json) => CategoryModel.fromJson(json as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw 'Error al cargar categorías: ${e.message}';
     }
   }
 
@@ -41,8 +55,12 @@ class LiveTvRemoteDataSource {
     try {
       final response = await _dioClient.instance.get('${AppConfig.series}/$id');
       return ChannelModel.fromJson(response.data);
-    } on DioException catch (_) {
-      throw 'Error al cargar detalles de la serie';
+    } on DioException catch (e) {
+      throw 'Error al cargar detalles: ${e.message}';
     }
   }
 }
+
+final liveTvDataSourceProvider = Provider<LiveTvRemoteDataSource>((ref) {
+  throw UnimplementedError('liveTvDataSourceProvider must be overridden');
+});

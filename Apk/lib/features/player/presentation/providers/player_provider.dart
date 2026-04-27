@@ -149,8 +149,8 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
   void togglePlay() => state.player.playOrPause();
 
-  void stop() {
-    state.player.pause();
+  Future<void> stop() async {
+    await state.player.stop();
   }
 
   Future<void> retry() async {
