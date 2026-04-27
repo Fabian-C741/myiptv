@@ -34,6 +34,29 @@ Route::get('/login', function () {
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login');
 Route::get('/app/config', [ConfigController::class, 'show']);
 
+// Ruta temporal para arreglar el problema de actualización
+Route::get('/fix-storage', function(Request $request) {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        $url = url('/storage/updates/Electrofabiptv.apk');
+        \App\Models\Setting::set('app_apk_url', $url);
+        
+        // Si pasas ?version=1.0.3 en la URL, se actualiza la versión en la DB
+        if ($request->has('version')) {
+            \App\Models\Setting::set('app_version', $request->query('version'));
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Symlink created and APK configuration updated',
+            'current_database_version' => \App\Models\Setting::get('app_version'),
+            'url' => $url
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+    }
+});
+
 // ── Rutas autenticadas con Sanctum ───────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
 

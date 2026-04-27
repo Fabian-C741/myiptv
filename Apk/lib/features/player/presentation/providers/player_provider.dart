@@ -49,7 +49,11 @@ class PlayerState {
 class PlayerNotifier extends StateNotifier<PlayerState> {
   static const int _maxRetries = 3;
 
-  PlayerNotifier() : super(PlayerState(player: Player())) {
+  PlayerNotifier() : super(PlayerState(player: Player(
+    configuration: const PlayerConfiguration(
+      bufferSize: 10 * 1024 * 1024, // 10MB buffer for smoother streaming
+    ),
+  ))) {
     _initListeners();
   }
 
@@ -126,20 +130,20 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       // Si ya hay algo reproduciendo, lo detenemos completamente
       await state.player.stop();
 
-      // Determinamos si necesitamos headers especiales (para evitar bloqueos de CDNs)
-      // Pero NO los usamos para YouTube, ya que pueden causar errores 403 Forbidden
+      // Determinamos si necesitamos headers especiales
       Map<String, String>? headers;
       if (!url.contains('youtube.com') && !url.contains('youtu.be')) {
         headers = {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+          'Accept': '*/*',
+          'Connection': 'keep-alive',
         };
       }
 
       final media = Media(finalUrl, httpHeaders: headers);
-      await state.player.open(media);
-      await state.player.play();
+      await state.player.open(media, play: true);
     } catch (e) {
-      if (mounted) state = state.copyWith(error: 'Error: $e');
+      if (mounted) state = state.copyWith(error: 'Error de conexión: El servidor no responde.');
     }
   }
 

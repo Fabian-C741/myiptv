@@ -33,17 +33,27 @@ if (Test-Path $apkPath) {
     $timestamp = Get-Date -Format "yyyyMMdd_HHmm"
     Copy-Item $apkPath -Destination "$backupDir\Electrofabiptv_v1.0.0_$timestamp.apk"
 
-    # Carpeta pública para descarga directa
+    # Carpeta de descarga para la App (Laravel Storage)
+    $storageUpdatesDir = "..\storage\app\public\updates"
+    if (!(Test-Path $storageUpdatesDir)) { New-Item -ItemType Directory -Path $storageUpdatesDir }
+    
+    $storagePath = "$storageUpdatesDir\Electrofabiptv.apk"
+    Copy-Item $apkPath -Destination $storagePath -Force
+
+    # También mantenemos en public/apk por si acaso
     $publicApkDir = "..\public\apk"
     if (!(Test-Path $publicApkDir)) { New-Item -ItemType Directory -Path $publicApkDir }
-    
-    $finalPublicPath = "$publicApkDir\Electrofabiptv.apk"
-    Copy-Item $apkPath -Destination $finalPublicPath -Force
+    Copy-Item $apkPath -Destination "$publicApkDir\Electrofabiptv.apk" -Force
     
     Write-Host "--------------------------------------------------------" -ForegroundColor Green
     Write-Host "¡COMPILACIÓN Y DESPLIEGUE EXITOSO!" -ForegroundColor Green
-    Write-Host "APK para descarga: https://streaming-iptv.kcrsf.com/apk/Electrofabiptv.apk" -ForegroundColor Green
+    Write-Host "APK desplegado en: $storagePath" -ForegroundColor Cyan
+    Write-Host "URL de descarga: https://streaming-iptv.kcrsf.com/storage/updates/Electrofabiptv.apk" -ForegroundColor Green
     Write-Host "--------------------------------------------------------" -ForegroundColor Green
+    
+    # Intentar actualizar la versión en la DB si php está disponible
+    Write-Host "Actualizando versión en la base de datos..." -ForegroundColor Yellow
+    php ..\artisan tinker --execute="App\Models\Setting::set('app_apk_url', 'https://streaming-iptv.kcrsf.com/storage/updates/Electrofabiptv.apk')"
 } else {
     Write-Host "ERROR: No se pudo generar el APK. Revisa los logs de arriba." -ForegroundColor Red
     exit 1
