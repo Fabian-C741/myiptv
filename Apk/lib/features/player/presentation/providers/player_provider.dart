@@ -51,9 +51,14 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
   PlayerNotifier() : super(PlayerState(player: Player(
     configuration: const PlayerConfiguration(
-      bufferSize: 10 * 1024 * 1024, // 10MB buffer for smoother streaming
+      bufferSize: 2 * 1024 * 1024, // Reducido a 2MB para arranque instantáneo
     ),
   ))) {
+    // Configuración para Streaming de baja latencia
+    if (state.player.platform is NativePlayer) {
+      (state.player.platform as NativePlayer).setProperty('network-timeout', '10');
+      (state.player.platform as NativePlayer).setProperty('cache-pause', 'no');
+    }
     _initListeners();
   }
 
@@ -142,6 +147,12 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
       final media = Media(finalUrl, httpHeaders: headers);
       await state.player.open(media, play: true);
+      // Forzamos el play después de un micro-delay para asegurar que arranque
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted && !state.isPlaying) {
+          state.player.play();
+        }
+      });
     } catch (e) {
       if (mounted) state = state.copyWith(error: 'Error de conexión: El servidor no responde.');
     }
