@@ -60,7 +60,3 @@ class LiveTvRemoteDataSource {
     }
   }
 }
-
-final liveTvDataSourceProvider = Provider<LiveTvRemoteDataSource>((ref) {
-  throw UnimplementedError('liveTvDataSourceProvider must be overridden');
-});
