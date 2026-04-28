@@ -210,25 +210,31 @@ class AppUpdateService {
 
   Future<void> _installApk(String filePath) async {
     try {
-      // Usamos url_launcher para abrir el archivo con el instalador del sistema
-      // Es mucho más compatible que intentar ejecutar comandos nativos directos
-      final Uri url = Uri.parse('file://$filePath');
+      debugPrint('🚀 Intentando instalar APK desde: $filePath');
       
-      // Intentamos abrir el archivo. Si es un APK, Android ofrecerá instalarlo.
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        // Si falla, probamos con el comando nativo corregido
+      // En lugar de url_launcher, usamos el comando am start de Android
+      // pero con los parámetros exactos que espera el sistema para una instalación
+      final result = await Process.run('am', [
+        'start',
+        '-a', 'android.intent.action.INSTALL_PACKAGE',
+        '-d', 'file://$filePath',
+        '-t', 'application/vnd.android.package-archive',
+        '--grant-read-uri-permission',
+      ]);
+
+      if (result.exitCode != 0) {
+        debugPrint('❌ Error en comando AM: ${result.stderr}');
+        // Segundo intento: modo VIEW estándar
         await Process.run('am', [
           'start',
           '-a', 'android.intent.action.VIEW',
           '-d', 'file://$filePath',
           '-t', 'application/vnd.android.package-archive',
-          '--grant-read-uri-permission'
+          '--grant-read-uri-permission',
         ]);
       }
     } catch (e) {
-      debugPrint('❌ Error instalando APK: $e');
+      debugPrint('❌ Error crítico instalando APK: $e');
     }
   }
 }
