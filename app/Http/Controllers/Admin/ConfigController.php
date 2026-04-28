@@ -172,10 +172,11 @@ class ConfigController extends Controller
                 $strings[] = $str;
             }
 
-            // Buscar la versión entre las cadenas del pool (ej: "1.0.4")
+            // Buscar la versión entre las cadenas del pool (ej: "1.0.4" o "1.0.4+25")
             foreach ($strings as $s) {
-                if (preg_match('/^\d+\.\d+(\.\d+)*$/', trim($s))) {
-                    return trim($s);
+                $s = trim($s);
+                if (preg_match('/^\d+\.\d+(\.\d+)*(\+\d+)?$/', $s)) {
+                    return $s;
                 }
             }
 
