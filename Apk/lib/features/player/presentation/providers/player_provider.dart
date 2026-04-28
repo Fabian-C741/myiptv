@@ -51,7 +51,7 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
   PlayerNotifier() : super(PlayerState(player: Player(
     configuration: const PlayerConfiguration(
-      bufferSize: 2 * 1024 * 1024, // Reducido a 2MB para arranque instantáneo
+      bufferSize: 10 * 1024 * 1024, // Aumentado a 10MB para evitar cortes en conexiones lentas
     ),
   ))) {
     // Configuración para Streaming de baja latencia
