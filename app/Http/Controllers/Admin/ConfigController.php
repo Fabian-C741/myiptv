@@ -91,14 +91,14 @@ class ConfigController extends Controller
                 $apkUrl = url(Storage::url('updates/' . $apkName));
                 Setting::set('app_apk_url', $apkUrl);
 
-                // 3. Leer la versión directamente del APK (sin intervención manual)
+                // 3. Leer la versión directamente del APK (Desactivado para dar control manual)
+                /*
                 $realPath   = storage_path('app/public/updates/' . $apkName);
                 $detectedVersion = $this->readApkVersion($realPath);
-
                 if ($detectedVersion) {
-                    // Usamos la versión real del APK compilado
                     Setting::set('app_version', $detectedVersion);
                 }
+                */
                 // Si no se pudo detectar, la versión del formulario ya fue guardada arriba.
 
             } catch (\Exception $e) {

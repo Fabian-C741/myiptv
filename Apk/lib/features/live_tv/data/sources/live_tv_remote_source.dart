@@ -54,7 +54,10 @@ class LiveTvRemoteDataSource {
   Future<ChannelModel> getSeriesDetails(int id) async {
     try {
       final response = await _dioClient.instance.get('${AppConfig.series}/$id');
-      return ChannelModel.fromJson(response.data);
+      final data = (response.data is Map && response.data.containsKey('data'))
+          ? response.data['data']
+          : response.data;
+      return ChannelModel.fromJson(data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw 'Error al cargar detalles: ${e.message}';
     }
