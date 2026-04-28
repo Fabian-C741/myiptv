@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 /**
  * Auto-Deploy por Cron Job
@@ -12,7 +11,7 @@
 // ── Configuración ─────────────────────────────────────────────────────────────
 $repoOwner  = 'Fabian-C741';
 $repoName   = 'myiptv';
-$branch     = 'master';
+$branch     = 'main';
 $projectDir = '/home/u496356948';                // Raíz del proyecto Laravel
 $logFile    = '/home/u496356948/public_html/deploy_cron.log';
 $maxLogSize = 500 * 1024;               // Rotar log si supera 500KB
