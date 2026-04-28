@@ -209,28 +209,25 @@ class AppUpdateService {
 
   Future<void> _installApk(String filePath) async {
     try {
-      // Usamos Process para lanzar el intent de instalación nativo de Android
-      // Esto abre el instalador del sistema directamente
-      final uri = Uri.file(filePath);
-      await Process.run('am', [
-        'start',
-        '-a', 'android.intent.action.VIEW',
-        '-t', 'application/vnd.android.package-archive',
-        '-d', uri.toString(),
-        '--grant-read-uri-permission',
-      ]);
-    } catch (e) {
-      debugPrint('❌ Error instalando APK via Process: $e');
-      // Fallback: intentamos con open_file si está disponible
-      try {
+      // Usamos url_launcher para abrir el archivo con el instalador del sistema
+      // Es mucho más compatible que intentar ejecutar comandos nativos directos
+      final Uri url = Uri.parse('file://$filePath');
+      
+      // Intentamos abrir el archivo. Si es un APK, Android ofrecerá instalarlo.
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        // Si falla, probamos con el comando nativo corregido
         await Process.run('am', [
           'start',
-          '-a', 'android.intent.action.INSTALL_PACKAGE',
+          '-a', 'android.intent.action.VIEW',
           '-d', 'file://$filePath',
+          '-t', 'application/vnd.android.package-archive',
+          '--grant-read-uri-permission'
         ]);
-      } catch (e2) {
-        debugPrint('❌ Fallback también falló: $e2');
       }
+    } catch (e) {
+      debugPrint('❌ Error instalando APK: $e');
     }
   }
 }
