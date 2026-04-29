@@ -75,16 +75,20 @@ class ChannelAdminController extends Controller
             }
         }
 
-        Channel::create([
-            'name' => $request->name,
-            'type' => $request->type,
-            'stream_url' => $request->stream_url,
-            'logo' => $logo,
-            'description' => $request->description,
-            'is_active' => true,
-        ]);
+        try {
+            Channel::create([
+                'name' => $request->name,
+                'type' => $request->type,
+                'stream_url' => $request->stream_url,
+                'logo' => $logo,
+                'description' => $request->description,
+                'is_active' => true,
+            ]);
 
-        return redirect()->route('admin.channels.index')->with('success', 'Contenido personalizado agregado exitosamente.');
+            return redirect()->route('admin.channels.index')->with('success', 'Contenido personalizado agregado exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors(['error' => 'Error al guardar: ' . $e->getMessage()]);
+        }
     }
 
     /**
