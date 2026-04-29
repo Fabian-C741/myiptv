@@ -51,6 +51,7 @@
                             <th scope="col" class="border-secondary">Logo</th>
                             <th scope="col" class="border-secondary">Nombre</th>
                             <th scope="col" class="border-secondary">Tipo</th>
+                            <th scope="col" class="border-secondary text-center">Salud del Stream</th>
                             <th scope="col" class="border-secondary text-center">Visible en la App</th>
                         </tr>
                     </thead>
@@ -77,6 +78,14 @@
                                     @endif
                                 </td>
                                 <td class="border-secondary text-center">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <span class="badge bg-secondary me-2 health-status-badge" id="status-{{ $channel->id }}">Desconocido</span>
+                                        <button class="btn btn-sm btn-outline-info check-health-btn" data-id="{{ $channel->id }}" title="Probar conexión">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="border-secondary text-center">
                                     <div class="form-check form-switch d-flex justify-content-center">
                                         <input class="form-check-input toggle-status" type="checkbox" role="switch" data-id="{{ $channel->id }}" {{ $channel->is_active ? 'checked' : '' }} style="cursor: pointer; transform: scale(1.2);">
                                     </div>
@@ -101,6 +110,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Toggle Status
     const toggles = document.querySelectorAll('.toggle-status');
     toggles.forEach(toggle => {
         toggle.addEventListener('change', function() {
@@ -125,6 +135,45 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 this.checked = !isActive;
+            });
+        });
+    });
+
+    // Health Check
+    const checkBtns = document.querySelectorAll('.check-health-btn');
+    checkBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const badge = document.getElementById(`status-${id}`);
+            const icon = this.querySelector('i');
+
+            // UI Feedback
+            badge.innerText = 'Probando...';
+            badge.className = 'badge bg-warning text-dark me-2 health-status-badge';
+            icon.classList.add('fa-spin');
+            this.disabled = true;
+
+            fetch(`/admin/channels/${id}/check`)
+            .then(response => response.json())
+            .then(data => {
+                icon.classList.remove('fa-spin');
+                this.disabled = false;
+                
+                if (data.online) {
+                    badge.innerText = 'ONLINE';
+                    badge.className = 'badge bg-success me-2 health-status-badge';
+                } else {
+                    badge.innerText = 'CAÍDO';
+                    badge.className = 'badge bg-danger me-2 health-status-badge';
+                    // Opcional: mostrar error al pasar el mouse
+                    badge.title = data.status;
+                }
+            })
+            .catch(error => {
+                icon.classList.remove('fa-spin');
+                this.disabled = false;
+                badge.innerText = 'ERROR';
+                badge.className = 'badge bg-secondary me-2 health-status-badge';
             });
         });
     });

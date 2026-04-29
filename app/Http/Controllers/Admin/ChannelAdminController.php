@@ -101,5 +101,33 @@ class ChannelAdminController extends Controller
             'is_active' => $channel->is_active,
             'message' => 'Estado actualizado.'
         ]);
+    /**
+     * Verifica si el link del canal está online.
+     */
+    public function checkStatus($id)
+    {
+        $channel = Channel::findOrFail($id);
+        $url = $channel->stream_url;
+
+        try {
+            // Configurar contexto para evitar bloqueos por falta de User-Agent
+            $opts = [
+                "http" => [
+                    "method" => "GET",
+                    "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36\r\n",
+                    "timeout" => 5
+                ]
+            ];
+            $context = stream_context_create($opts);
+            $headers = @get_headers($url, 1, $context);
+
+            if ($headers && str_contains($headers[0], '200')) {
+                return response()->json(['online' => true, 'status' => $headers[0]]);
+            }
+            
+            return response()->json(['online' => false, 'status' => $headers ? $headers[0] : 'No responde']);
+        } catch (\Exception $e) {
+            return response()->json(['online' => false, 'status' => 'Error: ' . $e->getMessage()]);
+        }
     }
 }
