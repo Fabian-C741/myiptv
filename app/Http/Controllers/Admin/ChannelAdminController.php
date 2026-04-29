@@ -9,16 +9,6 @@ use Illuminate\Support\Facades\Schema;
 
 class ChannelAdminController extends Controller
 {
-    public function __construct()
-    {
-        // Parche automático: Si la columna is_active no existe (error viejo), la crea silenciosamente
-        if (!Schema::hasColumn('channels', 'is_active')) {
-            Schema::table('channels', function ($table) {
-                $table->boolean('is_active')->default(true)->after('description');
-            });
-        }
-    }
-
     /**
      * List all channels with pagination and filtering.
      */
