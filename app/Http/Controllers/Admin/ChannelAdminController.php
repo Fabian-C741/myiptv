@@ -101,16 +101,17 @@ class ChannelAdminController extends Controller
             'is_active' => $channel->is_active,
             'message' => 'Estado actualizado.'
         ]);
+    }
+
     /**
-     * Verifica si el link del canal está online.
+     * Verifica y oculta automáticamente si está caído.
      */
-    public function checkStatus($id)
+    public function autoHide($id)
     {
         $channel = Channel::findOrFail($id);
         $url = $channel->stream_url;
 
         try {
-            // Configurar contexto para evitar bloqueos por falta de User-Agent
             $opts = [
                 "http" => [
                     "method" => "GET",
@@ -121,13 +122,20 @@ class ChannelAdminController extends Controller
             $context = stream_context_create($opts);
             $headers = @get_headers($url, 1, $context);
 
-            if ($headers && str_contains($headers[0], '200')) {
-                return response()->json(['online' => true, 'status' => $headers[0]]);
+            $isOnline = ($headers && str_contains($headers[0], '200'));
+
+            if (!$isOnline) {
+                $channel->is_active = false;
+                $channel->save();
             }
             
-            return response()->json(['online' => false, 'status' => $headers ? $headers[0] : 'No responde']);
+            return response()->json([
+                'online' => $isOnline, 
+                'is_active' => $channel->is_active,
+                'status' => $headers ? $headers[0] : 'No responde'
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['online' => false, 'status' => 'Error: ' . $e->getMessage()]);
+            return response()->json(['online' => false, 'is_active' => $channel->is_active, 'status' => 'Error']);
         }
     }
 }

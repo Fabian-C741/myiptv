@@ -54,7 +54,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/channels/create', [ChannelAdminController::class, 'create'])->name('admin.channels.create');
         Route::post('/channels', [ChannelAdminController::class, 'store'])->name('admin.channels.store');
         Route::post('/channels/{id}/toggle', [ChannelAdminController::class, 'toggleStatus'])->name('admin.channels.toggle');
-        Route::get('/channels/{id}/check', [ChannelAdminController::class, 'checkStatus'])->name('admin.channels.check');
+        Route::get('/channels/{id}/check', [ChannelAdminController::class, 'autoHide'])->name('admin.channels.check');
 
         // Configuración de Marca y App
         Route::get('/config', [ConfigController::class, 'index'])->name('admin.config');

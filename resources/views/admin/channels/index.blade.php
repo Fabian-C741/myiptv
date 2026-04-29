@@ -6,9 +6,14 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-white">Gestor de Contenido Sincronizado</h1>
-        <a href="{{ route('admin.channels.create') }}" class="btn btn-danger">
-            <i class="fas fa-plus"></i> Nuevo Contenido Personalizado (YouTube/Manual)
-        </a>
+        <div>
+            <button id="bulk-check-btn" class="btn btn-outline-warning me-2">
+                <i class="fas fa-broom"></i> 🚀 Auto-Limpiar Página
+            </button>
+            <a href="{{ route('admin.channels.create') }}" class="btn btn-danger">
+                <i class="fas fa-plus"></i> Nuevo Contenido Personalizado (YouTube/Manual)
+            </a>
+        </div>
     </div>
 
     <div class="card bg-dark text-white border-secondary mb-4">
@@ -165,8 +170,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     badge.innerText = 'CAÍDO';
                     badge.className = 'badge bg-danger me-2 health-status-badge';
-                    // Opcional: mostrar error al pasar el mouse
-                    badge.title = data.status;
+                    // Si estaba activo y se ocultó, reflejarlo en el switch
+                    const toggle = document.querySelector(`.toggle-status[data-id="${id}"]`);
+                    if (toggle) toggle.checked = data.is_active;
                 }
             })
             .catch(error => {
@@ -176,6 +182,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 badge.className = 'badge bg-secondary me-2 health-status-badge';
             });
         });
+    });
+
+    // Bulk Check Logic
+    const bulkBtn = document.getElementById('bulk-check-btn');
+    bulkBtn.addEventListener('click', async function() {
+        if (!confirm('¿Querés testear y ocultar automáticamente todos los canales caídos de esta página?')) return;
+        
+        this.disabled = true;
+        const btns = Array.from(document.querySelectorAll('.check-health-btn'));
+        
+        for (const btn of btns) {
+            btn.click(); // Ejecutar el clic individual
+            // Esperar un poco entre cada uno para no saturar
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
+        }
+        
+        this.disabled = false;
+        alert('Limpieza de página completada.');
     });
 });
 </script>
