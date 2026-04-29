@@ -57,20 +57,24 @@ class AppUpdateService {
 
   bool _isVersionGreater(String server, String local) {
     try {
-      final cleanServer = server.split('+')[0].split('-')[0];
-      final cleanLocal = local.split('+')[0].split('-')[0];
-      final sParts = cleanServer.split('.');
-      final lParts = cleanLocal.split('.');
-      final length = sParts.length > lParts.length ? sParts.length : lParts.length;
+      // Limpiamos versiones (quitamos el + y cualquier letra)
+      final cleanServer = server.split('+')[0].trim();
+      final cleanLocal = local.split('+')[0].trim();
+      
+      // Si son iguales, no es mayor
+      if (cleanServer == cleanLocal) return false;
 
-      for (int i = 0; i < length; i++) {
-        final s = i < sParts.length ? int.tryParse(sParts[i].replaceAll(RegExp(r'[^0-9]'), '')) ?? 0 : 0;
-        final l = i < lParts.length ? int.tryParse(lParts[i].replaceAll(RegExp(r'[^0-9]'), '')) ?? 0 : 0;
+      final sParts = cleanServer.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final lParts = cleanLocal.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+
+      for (int i = 0; i < 3; i++) {
+        final s = i < sParts.length ? sParts[i] : 0;
+        final l = i < lParts.length ? lParts[i] : 0;
         if (s > l) return true;
         if (s < l) return false;
       }
     } catch (e) {
-      return server != local;
+      return false;
     }
     return false;
   }
