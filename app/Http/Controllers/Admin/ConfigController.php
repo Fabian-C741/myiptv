@@ -84,22 +84,18 @@ class ConfigController extends Controller
                 $apkName = 'Electrofabiptv.apk';
                 $apkFile = $request->file('apk_file');
 
-                // 1. Guardar el archivo
-                $apkFile->storeAs('public/updates', $apkName);
-
-                // 2. URL pública automática
-                $apkUrl = url(Storage::url('updates/' . $apkName));
-                Setting::set('app_apk_url', $apkUrl);
-
-                // 3. Leer la versión directamente del APK (Desactivado para dar control manual)
-                /*
-                $realPath   = storage_path('app/public/updates/' . $apkName);
-                $detectedVersion = $this->readApkVersion($realPath);
-                if ($detectedVersion) {
-                    Setting::set('app_version', $detectedVersion);
+                // 1. Guardar el archivo usando la ruta real del servidor
+                $docRoot = $_SERVER['DOCUMENT_ROOT'];
+                $destinationPath = $docRoot . '/storage/updates';
+                
+                if (!file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
                 }
-                */
-                // Si no se pudo detectar, la versión del formulario ya fue guardada arriba.
+                $apkFile->move($destinationPath, $apkName);
+
+                // 2. URL pública automática corregida
+                $apkUrl = url('storage/updates/' . $apkName);
+                Setting::set('app_apk_url', $apkUrl);
 
             } catch (\Exception $e) {
                 return back()->withErrors(['apk_file' => 'Error al guardar el APK: ' . $e->getMessage()]);
