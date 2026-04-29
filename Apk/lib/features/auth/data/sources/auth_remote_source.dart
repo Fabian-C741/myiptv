@@ -37,11 +37,16 @@ class AuthRemoteDataSource {
   }
 
   String _handleError(DioException e) {
-    if (e.response?.statusCode == 422) {
-      return e.response?.data['message'] ?? 'Credenciales inválidas';
+    if (e.response != null && e.response?.data != null) {
+      final message = e.response?.data['message'];
+      if (message != null) return message;
     }
-    if (e.response?.statusCode == 429) {
-      return 'Límite de dispositivos excedido';
+    
+    if (e.response?.statusCode == 401) {
+      return 'Credenciales inválidas';
+    }
+    if (e.response?.statusCode == 403) {
+      return 'Acceso denegado o límite alcanzado';
     }
     return 'Error de conexión con el servidor';
   }

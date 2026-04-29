@@ -54,10 +54,11 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       bufferSize: 10 * 1024 * 1024, // Aumentado a 10MB para evitar cortes en conexiones lentas
     ),
   ))) {
-    // Configuración para Streaming de baja latencia
+    // Configuración para Streaming: Priorizamos estabilidad sobre latencia extrema
     if (state.player.platform is NativePlayer) {
       (state.player.platform as NativePlayer).setProperty('network-timeout', '10');
-      (state.player.platform as NativePlayer).setProperty('cache-pause', 'no');
+      (state.player.platform as NativePlayer).setProperty('cache-pause', 'yes'); // Permitimos pausar para cargar buffer
+      (state.player.platform as NativePlayer).setProperty('demuxer-max-bytes', '20480000'); // 20MB de buffer forzado
     }
     _initListeners();
   }
@@ -183,6 +184,8 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
   @override
   void dispose() {
+    // Nos aseguramos de detener la reproducción antes de liberar memoria
+    state.player.stop();
     state.player.dispose();
     super.dispose();
   }

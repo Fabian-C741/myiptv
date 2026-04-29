@@ -60,19 +60,25 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with WidgetsBinding
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     
-    // Restaurar barras del sistema y orientación
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    
-    // Detener y liberar el reproductor
+    // 1. Detener el video inmediatamente (Soluciona que siga sonando)
     try {
         final notifier = ref.read(playerProvider('global').notifier);
         notifier.stop();
-        // Invalidar el provider para forzar la destrucción del Player si no se usa
-        ref.invalidate(playerProvider('global'));
     } catch (e) {
-        debugPrint('Error disposing player: $e');
+        debugPrint('Error stopping player: $e');
     }
+
+    // 2. Restaurar barras del sistema y orientación (Soluciona lo "volteado de costado")
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    
+    // 3. Liberar recursos
+    ref.invalidate(playerProvider('global'));
     
     super.dispose();
   }
