@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
 import '../network/dio_client.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -214,28 +214,10 @@ class AppUpdateService {
 
   Future<void> _installApk(String filePath) async {
     try {
-      debugPrint('🚀 Intentando instalar APK desde: $filePath');
-      
-      // En lugar de url_launcher, usamos el comando am start de Android
-      // pero con los parámetros exactos que espera el sistema para una instalación
-      final result = await Process.run('am', [
-        'start',
-        '-a', 'android.intent.action.INSTALL_PACKAGE',
-        '-d', 'file://$filePath',
-        '-t', 'application/vnd.android.package-archive',
-        '--grant-read-uri-permission',
-      ]);
-
-      if (result.exitCode != 0) {
-        debugPrint('❌ Error en comando AM: ${result.stderr}');
-        // Segundo intento: modo VIEW estándar
-        await Process.run('am', [
-          'start',
-          '-a', 'android.intent.action.VIEW',
-          '-d', 'file://$filePath',
-          '-t', 'application/vnd.android.package-archive',
-          '--grant-read-uri-permission',
-        ]);
+      debugPrint('🚀 Lanzando instalador nativo para: $filePath');
+      final result = await OpenFile.open(filePath, type: 'application/vnd.android.package-archive');
+      if (result.type != ResultType.done) {
+        debugPrint('❌ No se pudo abrir el instalador: ${result.message}');
       }
     } catch (e) {
       debugPrint('❌ Error crítico instalando APK: $e');

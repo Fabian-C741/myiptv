@@ -28,14 +28,13 @@
                     <form action="{{ route('admin.channels.store') }}" method="POST">
                         @csrf
                         
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Nombre / Título</label>
-                            <input type="text" class="form-control bg-dark text-white border-secondary @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required placeholder="Ej: Película Increíble">
-                            @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-8">
+                                <label for="name" class="form-label">Nombre / Título</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required placeholder="Ej: Película Increíble">
+                                @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
                                 <label for="type" class="form-label">Tipo de Contenido</label>
                                 <select class="form-select bg-dark text-white border-secondary @error('type') is-invalid @enderror" id="type" name="type" required>
                                     <option value="movie" {{ old('type') == 'movie' ? 'selected' : '' }}>Película (VOD)</option>
@@ -44,27 +43,64 @@
                                 </select>
                                 @error('type') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
+                        </div>
+
+                        <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="logo" class="form-label">URL del Póster o Logo (Opcional)</label>
+                                <label for="logo" class="form-label">URL del Póster (Vertical)</label>
                                 <input type="url" class="form-control bg-dark text-white border-secondary @error('logo') is-invalid @enderror" id="logo" name="logo" value="{{ old('logo') }}" placeholder="https://ejemplo.com/poster.jpg">
                                 @error('logo') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label for="backdrop" class="form-label">URL del Fondo (Horizontal/Backdrop)</label>
+                                <input type="url" class="form-control bg-dark text-white border-secondary @error('backdrop') is-invalid @enderror" id="backdrop" name="backdrop" value="{{ old('backdrop') }}" placeholder="https://ejemplo.com/fondo.jpg">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="release_date" class="form-label">Año de Estreno</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" id="release_date" name="release_date" value="{{ old('release_date') }}" placeholder="Ej: 2024">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="rating" class="form-label">Calificación (TMDB/Puntaje)</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" id="rating" name="rating" value="{{ old('rating') }}" placeholder="Ej: 8.5">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="duration" class="form-label">Duración / Calidad</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" id="duration" name="duration" value="{{ old('duration') }}" placeholder="Ej: 1h 45min / 4K">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="stream_url" class="form-label">URL del Video (YouTube o MP4/M3U8)</label>
+                            <input type="url" class="form-control bg-dark text-white border-secondary @error('stream_url') is-invalid @enderror" id="stream_url" name="stream_url" value="{{ old('stream_url') }}" required placeholder="https://www.youtube.com/watch?v=XXXXXX">
+                            <div class="form-text text-muted">Soporta enlaces directos y YouTube. El sistema extraerá el video automáticamente.</div>
+                            @error('stream_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="tmdb_id" class="form-label">ID de TMDB (Opcional)</label>
+                                <input type="number" class="form-control bg-dark text-white border-secondary" id="tmdb_id" name="tmdb_id" value="{{ old('tmdb_id') }}" placeholder="Ej: 550">
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="is_adult" name="is_adult" value="1" {{ old('is_adult') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_adult">Contenido Adulto (+18)</label>
+                                </div>
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label for="stream_url" class="form-label">URL del Video (YouTube o MP4/M3U8)</label>
-                            <input type="url" class="form-control bg-dark text-white border-secondary @error('stream_url') is-invalid @enderror" id="stream_url" name="stream_url" value="{{ old('stream_url') }}" required placeholder="https://www.youtube.com/watch?v=XXXXXX">
-                            <div class="form-text text-muted">La aplicación móvil detectará automáticamente los enlaces de YouTube y extraerá el video puro.</div>
-                            @error('stream_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="description" class="form-label">Sinopsis o Descripción (Opcional)</label>
-                            <textarea class="form-control bg-dark text-white border-secondary" id="description" name="description" rows="3">{{ old('description') }}</textarea>
+                            <label for="description" class="form-label">Sinopsis o Descripción</label>
+                            <textarea class="form-control bg-dark text-white border-secondary" id="description" name="description" rows="3" placeholder="Resumen de la trama...">{{ old('description') }}</textarea>
                         </div>
 
                         <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-danger px-5">Guardar y Publicar</button>
+                            <button type="submit" class="btn btn-danger btn-lg px-5 shadow-sm">
+                                <i class="fas fa-rocket me-2"></i> Publicar Ahora
+                            </button>
                         </div>
                     </form>
                 </div>

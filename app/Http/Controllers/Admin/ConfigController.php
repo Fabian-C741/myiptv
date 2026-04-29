@@ -92,8 +92,15 @@ class ConfigController extends Controller
                     mkdir($destinationPath, 0755, true);
                 }
                 $apkFile->move($destinationPath, $apkName);
+                $fullPath = $destinationPath . '/' . $apkName;
 
-                // 2. URL pública automática corregida
+                // 2. Detección automática de la versión
+                $detectedVersion = $this->readApkVersion($fullPath);
+                if ($detectedVersion) {
+                    Setting::set('app_version', $detectedVersion);
+                }
+
+                // 3. URL pública automática corregida
                 $apkUrl = url('storage/updates/' . $apkName);
                 Setting::set('app_apk_url', $apkUrl);
 

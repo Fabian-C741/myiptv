@@ -6,6 +6,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../providers/player_provider.dart';
 import 'package:ott_app/shared/models/channel_model.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/pip_service.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
   final ChannelModel channel;
@@ -19,6 +20,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with WidgetsBinding
   late final VideoController _videoController;
   bool _showControls = true;
   bool _isLocked = false;
+  bool _isInPipMode = false;
+  bool _pipSupported = false;
   double _brightness = 0.5;
   double _volume = 1.0;
   double _playbackSpeed = 1.0;
@@ -42,6 +45,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with WidgetsBinding
     Future.microtask(() =>
         ref.read(playerProvider('global').notifier).playChannel(widget.channel));
     _resetTimer();
+
+    // Inicializar PiP
+    PipService.initialize(onPipModeChanged: (isInPip) {
+      if (mounted) setState(() => _isInPipMode = isInPip);
+    });
+    PipService.isPipSupported().then((supported) {
+      if (mounted) setState(() => _pipSupported = supported);
+    });
   }
 
   void _resetTimer() {
@@ -246,6 +257,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with WidgetsBinding
                               if (context.mounted) Navigator.pop(context);
                           },
                           onLock: () => setState(() => _isLocked = !_isLocked),
+                          onPip: _pipSupported ? () => PipService.enterPip() : null,
                       ),
                   ),
   
@@ -293,8 +305,9 @@ class _TopBar extends StatelessWidget {
     final bool isLocked;
     final VoidCallback onBack;
     final VoidCallback onLock;
+    final VoidCallback? onPip;
 
-    const _TopBar({required this.title, required this.isLocked, required this.onBack, required this.onLock});
+    const _TopBar({required this.title, required this.isLocked, required this.onBack, required this.onLock, this.onPip});
 
     @override
     Widget build(BuildContext context) {
@@ -307,6 +320,12 @@ class _TopBar extends StatelessWidget {
                     if (!isLocked) IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: onBack),
                     const SizedBox(width: 10),
                     if (!isLocked) Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500))),
+                    if (onPip != null)
+                      IconButton(
+                        icon: const Icon(Icons.picture_in_picture_alt, color: Colors.white70),
+                        tooltip: 'Picture in Picture',
+                        onPressed: onPip,
+                      ),
                     IconButton(icon: Icon(isLocked ? Icons.lock : Icons.lock_open, color: Colors.white70), onPressed: onLock),
                 ],
             ),

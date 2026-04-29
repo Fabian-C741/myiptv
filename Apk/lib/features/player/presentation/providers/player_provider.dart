@@ -123,13 +123,25 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       if (finalUrl.contains('youtube.com/') || finalUrl.contains('youtu.be/')) {
         try {
           final yt = YoutubeExplode();
-          // youtube_explode_dart 2.2.2 usa streams en lugar de streamsClient y acepta URLs directamente
-          final manifest = await yt.videos.streams.getManifest(finalUrl);
-          final streamInfo = manifest.muxed.withHighestBitrate();
-          finalUrl = streamInfo.url.toString();
+          final videoId = VideoId.parseVideoId(finalUrl);
+          if (videoId != null) {
+              final manifest = await yt.videos.streams.getManifest(videoId);
+              
+              // Intentamos primero Muxed (video + audio en uno)
+              var streamInfo = manifest.muxed.withHighestBitrate();
+              
+              // Si no hay muxed (común en 1080p+), buscamos el mejor video y audio por separado? 
+              // No, media_kit prefiere un solo stream. Intentamos HLS si está disponible.
+              if (manifest.hls.isNotEmpty) {
+                  finalUrl = manifest.hls.first.url.toString();
+              } else if (streamInfo != null) {
+                  finalUrl = streamInfo.url.toString();
+              }
+          }
           yt.close();
         } catch (e) {
-          print('YouTube extraction failed: $e');
+          debugPrint('❌ YouTube extraction failed: $e');
+          // Si falla, intentamos reproducir la URL original por si es un proxy
         }
       }
 

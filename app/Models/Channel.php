@@ -25,7 +25,10 @@ class Channel extends Model
         'tmdb_id',
     ];
 
-    protected $casts = ['is_adult' => 'boolean'];
+    protected $casts = [
+        'is_adult' => 'boolean',
+        'is_active' => 'boolean'
+    ];
 
     public function playlist()
     {

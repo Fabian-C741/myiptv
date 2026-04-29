@@ -72,7 +72,12 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td class="border-secondary font-weight-bold">{{ $channel->name }}</td>
+                                <td class="border-secondary font-weight-bold">
+                                    {{ $channel->name }}
+                                    @if($channel->release_date)
+                                        <small class="text-muted d-block">Año: {{ $channel->release_date }}</small>
+                                    @endif
+                                </td>
                                 <td class="border-secondary">
                                     @if($channel->type == 'live')
                                         <span class="badge bg-danger">LIVE</span>
@@ -80,6 +85,9 @@
                                         <span class="badge bg-primary">VOD</span>
                                     @else
                                         <span class="badge bg-success">SERIE</span>
+                                    @endif
+                                    @if($channel->duration)
+                                        <div class="mt-1"><small class="text-info"><i class="fas fa-clock me-1"></i>{{ $channel->duration }}</small></div>
                                     @endif
                                 </td>
                                 <td class="border-secondary text-center">
@@ -184,22 +192,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Bulk Check Logic
+    // Bulk Check Logic (Fondo/Backend)
     const bulkBtn = document.getElementById('bulk-check-btn');
     bulkBtn.addEventListener('click', async function() {
-        if (!confirm('¿Querés testear y ocultar automáticamente todos los canales caídos de esta página?')) return;
+        if (!confirm('¿Querés testear y ocultar automáticamente TODOS los canales caídos del sistema? Esto puede tardar un momento.')) return;
         
+        const originalText = this.innerHTML;
         this.disabled = true;
-        const btns = Array.from(document.querySelectorAll('.check-health-btn'));
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpiando base de datos...';
         
-        for (const btn of btns) {
-            btn.click(); // Ejecutar el clic individual
-            // Esperar un poco entre cada uno para no saturar
-            await new Promise(resolve => setTimeout(resolve, 1500)); 
-        }
-        
-        this.disabled = false;
-        alert('Limpieza de página completada.');
+        fetch("{{ route('admin.channels.bulk-check') }}", {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            this.disabled = false;
+            this.innerHTML = originalText;
+            alert(data.message);
+            window.location.reload(); // Recargar para ver los cambios
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            this.disabled = false;
+            this.innerHTML = originalText;
+            alert('Error al realizar la limpieza masiva.');
+        });
     });
 });
 </script>
