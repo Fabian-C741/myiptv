@@ -58,7 +58,7 @@ class ChannelAdminController extends Controller
         $logo = $request->logo;
 
         // Detección automática de miniatura de YouTube si no se proporcionó una imagen
-        if (empty($logo) && (str_contains($request->stream_url, 'youtube.com/') || str_contains($request->stream_url, 'youtu.be/'))) {
+        if (empty($logo) && (strpos($request->stream_url, 'youtube.com/') !== false || strpos($request->stream_url, 'youtu.be/') !== false)) {
             preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/\s]{11})%i', $request->stream_url, $match);
             if (isset($match[1])) {
                 $logo = 'https://img.youtube.com/vi/' . $match[1] . '/hqdefault.jpg';
@@ -118,7 +118,7 @@ class ChannelAdminController extends Controller
 
             $isOnline = false;
             if ($headers && isset($headers[0])) {
-                $isOnline = str_contains($headers[0], '200') || str_contains($headers[0], '302');
+                $isOnline = strpos($headers[0], '200') !== false || strpos($headers[0], '302') !== false;
             }
 
             if (!$isOnline) {
