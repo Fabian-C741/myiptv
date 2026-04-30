@@ -51,4 +51,25 @@ class VodRemoteDataSource {
       return [];
     }
   }
+
+  /// Obtiene los streams disponibles para un item de Stremio
+  Future<List<Map<String, dynamic>>> getStremioStreams({
+    required String baseUrl,
+    required String type,
+    required String id,
+  }) async {
+    try {
+      final response = await _dioClient.instance.get(
+        '/vod/stremio/stream/$type/$id',
+        queryParameters: {
+          'base_url': baseUrl,
+        },
+      );
+      
+      final List streams = response.data['streams'] ?? [];
+      return List<Map<String, dynamic>>.from(streams);
+    } catch (e) {
+      return [];
+    }
+  }
 }

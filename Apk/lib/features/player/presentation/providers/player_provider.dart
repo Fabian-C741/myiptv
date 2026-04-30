@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:ott_app/shared/models/channel_model.dart';
+import 'package:ott_app/features/home/presentation/providers/home_provider.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class PlayerState {
@@ -47,9 +49,10 @@ class PlayerState {
 }
 
 class PlayerNotifier extends StateNotifier<PlayerState> {
+  final Ref ref;
   static const int _maxRetries = 3;
 
-  PlayerNotifier() : super(PlayerState(player: Player(
+  PlayerNotifier(this.ref) : super(PlayerState(player: Player(
     configuration: const PlayerConfiguration(
       bufferSize: 10 * 1024 * 1024, // Aumentado a 10MB para evitar cortes en conexiones lentas
     ),
@@ -112,8 +115,33 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
   Future<void> _doPlay(ChannelModel channel) async {
     try {
-      final url = channel.streamUrl ?? '';
-      if (url.isEmpty) {
+      String? url = channel.streamUrl;
+      
+      // Si es una fuente externa de Stremio, obtenemos el stream primero
+      if (channel.isExternal && channel.externalSource == 'stremio' && channel.externalId != null) {
+        state = state.copyWith(isBuffering: true, error: null);
+        try {
+          final streams = await ref.read(vodDataSourceProvider).getStremioStreams(
+            baseUrl: channel.addonBaseUrl ?? '',
+            type: channel.type ?? 'movie',
+            id: channel.externalId!,
+          );
+          
+          if (streams.isNotEmpty) {
+            // Buscamos el primer stream que tenga una URL directa
+            final stream = streams.firstWhere(
+              (s) => s['url'] != null && s['url'].toString().startsWith('http'),
+              orElse: () => streams.first,
+            );
+            url = stream['url'] ?? stream['externalUrl'];
+            debugPrint('✅ Stream de Stremio obtenido: $url');
+          }
+        } catch (e) {
+          debugPrint('❌ Error obteniendo stream de Stremio: $e');
+        }
+      }
+
+      if (url == null || url.isEmpty) {
         state = state.copyWith(error: 'URL de stream no disponible.');
         return;
       }
@@ -204,5 +232,5 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 }
 
 final playerProvider = StateNotifierProvider.autoDispose.family<PlayerNotifier, PlayerState, String>((ref, id) {
-  return PlayerNotifier();
+  return PlayerNotifier(ref);
 });
