@@ -139,7 +139,7 @@ class ChannelAdminController extends Controller
                 $url = $channel->stream_url;
                 
                 // Si es YouTube, asumimos que está bien por ahora (o podrías validarlo)
-                if (str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be')) {
+                if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false) {
                     continue;
                 }
 

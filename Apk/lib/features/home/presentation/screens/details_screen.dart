@@ -23,6 +23,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
     if (widget.content.type == 'series') {
       _loadSeriesDetails();
     } else {
+      // Películas y live: reproducir directo sin esperar nada
       fullContent = widget.content;
     }
   }
@@ -31,11 +32,21 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
     setState(() => isLoading = true);
     try {
       final source = ref.read(liveTvDataSourceProvider);
-      fullContent = await source.getSeriesDetails(widget.content.id);
-    } catch (e) {
-      // Error handling
+      final details = await source
+          .getSeriesDetails(widget.content.id)
+          .timeout(const Duration(seconds: 8));
+
+      // Si tiene temporadas reales las usamos; si no, usamos el contenido original
+      if (details.seasons != null && details.seasons!.isNotEmpty) {
+        fullContent = details;
+      } else {
+        fullContent = widget.content; // Serie M3U directa con stream_url
+      }
+    } catch (_) {
+      // Timeout o error → usar el contenido original (tiene stream_url)
+      fullContent = widget.content;
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -112,24 +123,42 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                   ),
                   const SizedBox(height: 48),
                   
-                  // Botón Reproducir (Solo si es Movie)
-                  if (item.type == 'movie')
+                  // ── BOTÓN REPRODUCIR ──────────────────────────────────
+                  // Para: películas, series M3U directas (sin temporadas)
+                  if (!isLoading &&
+                      (fullContent ?? widget.content).streamUrl != null &&
+                      (fullContent ?? widget.content).streamUrl!.isNotEmpty)
                     ElevatedButton.icon(
-                      onPressed: () => context.push('/player', extra: item),
-                      icon: const Icon(Icons.play_arrow, size: 32),
-                      label: const Text('REPRODUCIR', style: TextStyle(fontSize: 20)),
+                      onPressed: () => context.push('/player', extra: fullContent ?? widget.content),
+                      icon: const Icon(Icons.play_arrow, size: 30),
+                      label: const Text('REPRODUCIR',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        backgroundColor: Colors.red[700],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                     ),
 
-                  // Sección de Temporadas para Series
-                  if (item.type == 'series') ...[
-                    if (isLoading)
-                      const CircularProgressIndicator()
-                    else if (item.seasons != null)
-                      _SeriesNavigator(seasons: item.seasons!),
-                  ],
+                  // ── CARGANDO EPISODIOS ────────────────────────────────
+                  if (isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Row(
+                        children: [
+                          CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          SizedBox(width: 16),
+                          Text('Cargando episodios...',
+                              style: TextStyle(color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+
+                  // ── TEMPORADAS ────────────────────────────────────────
+                  if (!isLoading && item.seasons != null && item.seasons!.isNotEmpty)
+                    _SeriesNavigator(seasons: item.seasons!),
                 ],
               ),
             ),

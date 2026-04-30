@@ -64,54 +64,61 @@ class HomeNotifier extends StateNotifier<HomeState> {
   Future<void> initHome() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // 1. Cargar canales en vivo y categorías (En paralelo para velocidad)
+      // 1. Cargar canales live + películas M3U + series M3U + categorías en paralelo
       final results = await Future.wait([
-        _liveTvDataSource.getChannels(type: 'live').timeout(const Duration(seconds: 5), onTimeout: () => []),
+        _liveTvDataSource.getChannels(type: 'live').timeout(const Duration(seconds: 8), onTimeout: () => []),
+        _liveTvDataSource.getChannels(type: 'movie').timeout(const Duration(seconds: 8), onTimeout: () => []),
+        _liveTvDataSource.getChannels(type: 'series').timeout(const Duration(seconds: 8), onTimeout: () => []),
         _liveTvDataSource.getCategories(type: 'live').timeout(const Duration(seconds: 5), onTimeout: () => []),
       ]);
 
-      final List<ChannelModel> channels = results[0] as List<ChannelModel>;
-      final List<CategoryModel> categories = results[1] as List<CategoryModel>;
-      
-      // 2. Cargar VOD de Stremio (Con protección total contra lentitud)
+      final List<ChannelModel> channels  = results[0] as List<ChannelModel>;
+      final List<ChannelModel> m3uMovies  = results[1] as List<ChannelModel>;
+      final List<ChannelModel> m3uSeries  = results[2] as List<ChannelModel>;
+      final List<CategoryModel> categories = results[3] as List<CategoryModel>;
+
+      // 2. Intentar cargar catálogos de Stremio (opcional, no bloquea)
       List<ChannelModel> stremioMovies = [];
       List<ChannelModel> stremioSeries = [];
-      
       try {
-        final catalogs = await _vodDataSource.getStremioCatalogs().timeout(const Duration(seconds: 3));
-        
-        // Cargamos los items de los primeros catálogos en paralelo
-        final List<Future<List<ChannelModel>>> catalogFutures = catalogs.take(4).map((cat) {
-          return _vodDataSource.getStremioItems(
+        final catalogs = await _vodDataSource.getStremioCatalogs()
+            .timeout(const Duration(seconds: 3));
+        final futures = catalogs.take(4).map((cat) =>
+          _vodDataSource.getStremioItems(
             baseUrl: cat['addon_url'],
             type: cat['type'],
             id: cat['id'],
-          ).timeout(const Duration(seconds: 4), onTimeout: () => []);
-        }).toList();
-
-        final itemsLists = await Future.wait(catalogFutures);
-        
+          ).timeout(const Duration(seconds: 4), onTimeout: () => [])
+        ).toList();
+        final itemsLists = await Future.wait(futures);
         for (int i = 0; i < itemsLists.length; i++) {
-            final type = catalogs[i]['type'];
-            if (type == 'movie') stremioMovies.addAll(itemsLists[i]);
-            if (type == 'series') stremioSeries.addAll(itemsLists[i]);
+          final t = catalogs[i]['type'];
+          if (t == 'movie') stremioMovies.addAll(itemsLists[i]);
+          if (t == 'series') stremioSeries.addAll(itemsLists[i]);
         }
-      } catch (e) {
-        // Si falla Stremio, la App sigue funcionando con los canales en vivo
-        print('Error en Stremio: $e');
+      } catch (_) {
+        // Stremio es opcional — si falla, la app sigue con contenido M3U
       }
+
+      // 3. Combinar: primero el contenido M3U (reproducible directo),
+      //    luego el de Stremio (requiere debrid para reproducir)
+      final allMovies  = [...m3uMovies,  ...stremioMovies];
+      final allSeries  = [...m3uSeries,  ...stremioSeries];
 
       state = state.copyWith(
         isLoading: false,
-        featuredChannels: channels.where((c) => c.logo != null).take(10).toList(), // Priorizar tus canales con logo
-        recentChannels: channels, // Sin límite para mostrar los 12500 canales
-        movies: stremioMovies,
-        series: stremioSeries,
+        featuredChannels: [
+          ...m3uMovies.where((c) => c.logo != null).take(5),
+          ...channels.where((c) => c.logo != null).take(5),
+        ],
+        recentChannels: channels,
+        movies: allMovies,
+        series: allSeries,
         categories: categories,
       );
     } catch (e) {
       if (mounted) {
-        state = state.copyWith(isLoading: false, error: 'Carga completada con algunas advertencias.');
+        state = state.copyWith(isLoading: false, error: 'Error al cargar contenido.');
       }
     }
   }
