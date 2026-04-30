@@ -34,6 +34,26 @@ Route::get('/login', function () {
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login');
 Route::get('/app/config', [ConfigController::class, 'show']);
 
+// ── Stremio Addon Manifest Público ────────────────────────────────────────────
+Route::get('/stremio/manifest.json', function () {
+    return response()->json([
+        'id'          => 'com.electrofabiptv.addon',
+        'version'     => '1.0.0',
+        'name'        => 'Electrofabi IPTV',
+        'description' => 'Canales en vivo, películas y series de Electrofabi IPTV',
+        'logo'        => url('/logo.png'),
+        'types'       => ['tv', 'movie', 'series'],
+        'catalogs'    => [
+            ['type' => 'tv',     'id' => 'efiptv_live',   'name' => 'En Vivo'],
+            ['type' => 'movie',  'id' => 'efiptv_movies', 'name' => 'Películas'],
+            ['type' => 'series', 'id' => 'efiptv_series', 'name' => 'Series'],
+        ],
+        'resources'   => ['catalog', 'stream', 'meta'],
+        'behaviorHints' => ['configurable' => false],
+    ])->header('Access-Control-Allow-Origin', '*')
+      ->header('Content-Type', 'application/json; charset=utf-8');
+})->name('stremio.manifest');
+
 // Ruta temporal para arreglar el problema de actualización
 Route::get('/fix-storage', function(Request $request) {
     try {
